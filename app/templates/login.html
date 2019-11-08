@@ -1,0 +1,28 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>index</title>
+</head>
+<body>
+    <form action=" " method="POST">
+        <p>
+            学号:<br>
+            <input type="text" name="username" /><br>
+        </p>
+        <p>
+            密码:</br>
+            <input type="password" name="password" /><br>
+        </p>
+        <p>
+            验证码:<br>
+            <input type="text" name="code"/><br>
+
+            <input type="text" hidden="hidden" name="cookies" value="{{cookies_str}}"><br>
+            <img src="data:image/jepg;base64,{{image_base64}}"/><br>
+                <button type="submit" class="btn-lg">登录</button>
+            </div>
+        </form>
+
+</body>
+</html>
