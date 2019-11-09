@@ -8,7 +8,7 @@ from app.models.base import db
 from app.web import web
 from app.form.refresh import RefreshController
 from app.models.wx_user import WxUser
-from form.login import LoginController
+from app.form.login import LoginController
 from utils import log
 
 

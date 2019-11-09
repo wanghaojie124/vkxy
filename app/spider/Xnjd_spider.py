@@ -1,8 +1,8 @@
 from pyquery import PyQuery as pq
 from bs4 import BeautifulSoup
-from models.base import db
-from models.user_schedule import UserSchedule
-from models.user_score import UserScore
+from app.models.base import db
+from app.models.user_schedule import UserSchedule
+from app.models.user_score import UserScore
 from utils import log
 
 

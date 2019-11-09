@@ -1,7 +1,7 @@
 import json
 from flask import request
 from app.web import web
-from models.articles import Articles
+from app.models.articles import Articles
 from app.models.base import db
 from app.models.images import Images
 from app.models.user import User
