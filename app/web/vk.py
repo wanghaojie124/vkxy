@@ -1,5 +1,5 @@
 import json
-from flask import request
+from flask import request, jsonify
 from app.web import web
 from app.models.articles import Articles
 from app.models.base import db
@@ -41,9 +41,13 @@ def get_articles():
             res_dict = json.loads(res.serialize)
             result[i] = res_dict
             i += 1
-        return result
+        return jsonify(result)
     else:
-        return '暂时还没有数据，请添加'
+        data = {
+            'msg': '暂时还没有数据，请联系管理员添加',
+            'status': 404
+        }
+        return jsonify(data)
 
 
 @web.route("/vk/addarticle", methods=["POST"])
@@ -54,13 +58,20 @@ def add_articles():
     if article:
         with db.auto_commit():
             article.setattr(form)
-            print(article.serialize)
-        return '已经保存啦'
+        data = {
+            'status': 200,
+            'msg': '已更新数据'
+        }
+        return data
     else:
         with db.auto_commit():
             articles.setattr(form)
             db.session.add(articles)
-        return '已储存完毕'
+        data = {
+            'status': 200,
+            'msg': '已储存数据'
+        }
+        return data
 
 
 @web.route("/vk/imagelist", methods=["GET"])
@@ -74,9 +85,13 @@ def get_images():
             res_dict = json.loads(res.serialize)
             result[i] = res_dict
             i += 1
-        return result
+        return jsonify(result)
     else:
-        return '暂时还没有数据，请添加'
+        data = {
+            'msg': '暂时还没有数据，请联系管理员添加',
+            'status': 404
+        }
+        return jsonify(data)
 
 
 @web.route("/vk/addimage", methods=["POST"])
@@ -87,13 +102,20 @@ def add_images():
     if image:
         with db.auto_commit():
             image.setattr(form)
-            print(image)
-        return '已经保存啦'
+        data = {
+            'status': 200,
+            'msg': '已更新数据'
+        }
+        return data
     else:
         with db.auto_commit():
             images.setattr(form)
             db.session.add(images)
-        return '已储存完毕'
+        data = {
+            'status': 200,
+            'msg': '已储存数据'
+        }
+        return data
 
 
 @web.route("/vk/users", methods=["get"])
@@ -107,6 +129,10 @@ def get_users():
             res_dict = json.loads(res.serialize)
             result[i] = res_dict
             i += 1
-        return result
+        return jsonify(result)
     else:
-        return '暂时还没有数据，请添加'
+        data = {
+            'msg': '暂时还没有数据，请联系管理员添加',
+            'status': 404
+        }
+        return jsonify(data)

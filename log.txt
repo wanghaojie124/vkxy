@@ -1,0 +1,42 @@
+2019-11-11 14:01:24 {"loginMsg":"登录成功！【2017114242,蔡良                                              】欢迎您回来，您上次登录时间为：2019-11-11 13:58:34.427，登录IP：171.223.61.80【】","loginStatus":"1"}
+
+2019-11-11 14:01:25 登陆成功
+2019-11-11 14:01:25 1 开启新线程保存数据
+2019-11-11 14:01:28 1 *****存储数据完毕
+2019-11-11 14:05:49 {"loginMsg":"登录成功！【2017114242,蔡良                                              】欢迎您回来，您上次登录时间为：2019-11-11 14:02:10.53，登录IP：171.223.61.80【】","loginStatus":"1"}
+
+2019-11-11 14:05:52 登陆成功
+2019-11-11 14:05:52 1 开启新线程保存数据
+2019-11-11 14:05:56 1 *****异步存储数据发生了错误 (pymysql.err.ProgrammingError) (1146, "Table 'vkxy.user_schedule' doesn't exist")
+[SQL: SELECT user_schedule.status AS user_schedule_status, user_schedule.id AS user_schedule_id, user_schedule.uid AS user_schedule_uid, user_schedule.xh AS user_schedule_xh, user_schedule.name AS user_schedule_name, user_schedule.jie AS user_schedule_jie, user_schedule.`Mon` AS `user_schedule_Mon`, user_schedule.`Tues` AS `user_schedule_Tues`, user_schedule.`Wed` AS `user_schedule_Wed`, user_schedule.`Thur` AS `user_schedule_Thur`, user_schedule.`Fri` AS `user_schedule_Fri`, user_schedule.`Sat` AS `user_schedule_Sat`, user_schedule.`Sun` AS `user_schedule_Sun` 
+FROM user_schedule 
+WHERE user_schedule.uid = %(uid_1)s AND user_schedule.status = %(status_1)s 
+ LIMIT %(param_1)s]
+[parameters: {'uid_1': 1, 'status_1': 1, 'param_1': 1}]
+(Background on this error at: http://sqlalche.me/e/f405)
+2019-11-11 14:07:16 {"loginMsg":"登录错误，用户不存在。如果您是新生请先完成账号注册，如果您是教师，请联系学院教务员老师添加账号。","loginStatus":"2"}
+
+2019-11-11 14:07:19 登录失败
+2019-11-11 14:07:19 *****用户名 593164063 在登录时发生了错误
+2019-11-11 14:08:13 {"loginMsg":"登录成功！【2017114242,蔡良                                              】欢迎您回来，您上次登录时间为：2019-11-11 14:06:35.49，登录IP：171.223.61.80【】","loginStatus":"1"}
+
+2019-11-11 14:09:06 {"loginMsg":"登录成功！【2017114242,蔡良                                              】欢迎您回来，您上次登录时间为：2019-11-11 14:09:00.22，登录IP：171.223.61.80【】","loginStatus":"1"}
+
+2019-11-11 14:09:07 登陆成功
+2019-11-11 14:09:07 1 开启新线程保存数据
+2019-11-11 14:09:18 1 *****存储数据完毕
+2019-11-11 14:10:43 {"loginMsg":"登录成功！【2017114242,蔡良                                              】欢迎您回来，您上次登录时间为：2019-11-11 14:09:52.98，登录IP：171.223.61.80【】","loginStatus":"1"}
+
+2019-11-11 14:10:46 登陆成功
+2019-11-11 14:10:46 1 开启新线程保存数据
+2019-11-11 14:10:56 1 *****存储数据完毕
+2019-11-11 14:12:13 {"loginMsg":"登录成功！【2017110870,王路远                                            】欢迎您回来，您上次登录时间为：2019-11-11 12:40:31.6，登录IP：171.223.61.80【】","loginStatus":"1"}
+
+2019-11-11 14:12:17 登陆成功
+2019-11-11 14:12:17 2 开启新线程保存数据
+2019-11-11 14:12:26 2 *****存储数据完毕
+2019-11-11 14:17:14 {"loginMsg":"登录成功！【2017114242,蔡良                                              】欢迎您回来，您上次登录时间为：2019-11-11 14:11:30.063，登录IP：171.223.61.80【】","loginStatus":"1"}
+
+2019-11-11 14:17:15 登陆成功
+2019-11-11 14:17:15 1 开启新线程保存数据
+2019-11-11 14:17:20 1 *****存储数据完毕

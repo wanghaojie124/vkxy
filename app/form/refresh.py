@@ -29,7 +29,11 @@ class RefreshController:
                 spider.save_score(form['uid'])
                 spider.save_schedule(form['uid'])
 
-                return '已更新数据'
+                data = {
+                    'status': 200,
+                    'msg': '已更新数据'
+                }
+                return data
             else:
                 log('*****用户名', form['username'], '在登录时发生了错误')
                 return {

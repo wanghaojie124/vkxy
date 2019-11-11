@@ -9,6 +9,8 @@ from app.web import web
 from app.form.refresh import RefreshController
 from app.models.wx_user import WxUser
 from app.form.login import LoginController
+from app.models.articles import Articles
+from app.models.images import Images
 from utils import log
 
 
@@ -18,11 +20,11 @@ def login():
     if request.method == "GET":
         college = request.args.get('college', '')
         data = controller.main(college, request.method)
-        return json.dumps(data)
+        return jsonify(data)
     if request.method == "POST":
         college = request.get_json().get('college', '')
         data = controller.main(college, request.method)
-        return data
+        return jsonify(data)
 
 
 @web.route('/', methods=["GET", "POST"])
@@ -43,7 +45,7 @@ def get_scores():
         res_dict.pop('uid')
         result[i] = res_dict
         i += 1
-    return json.dumps(result)
+    return jsonify(result)
 
 
 @web.route("/schedule", methods=["POST"])
@@ -60,7 +62,7 @@ def get_schedule():
         res_dict.pop('uid')
         result[i] = res_dict
         i += 1
-    return json.dumps(result)
+    return jsonify(result)
 
 
 # 微信授权处理
@@ -109,9 +111,51 @@ def refresh():
     if request.method == "GET":
         college = request.args.get('college', '')
         data = controller.main(college, request.method)
-        return json.dumps(data)
+        return jsonify(data)
 
     if request.method == "POST":
         college = request.get_json().get('college', '')
         data = controller.main(college, request.method)
-        return data
+        return jsonify(data)
+
+
+@web.route("/articlelist", methods=["GET"])
+def get_articles_info():
+    college = request.args.get('college', '')
+    articles = Articles.query.filter_by(college=college).all()
+    if articles:
+        i = 0
+        result = {}
+
+        for res in articles:
+            res_dict = json.loads(res.serialize)
+            result[i] = res_dict
+            i += 1
+        return jsonify(result)
+    else:
+        data = {
+            'msg': '暂时还没有数据，请联系管理员添加',
+            'status': 404
+        }
+        return jsonify(data)
+
+
+@web.route("/imagelist", methods=["GET"])
+def get_image_info():
+    college = request.args.get('college', '')
+    images = Images.query.filter_by(college=college).all()
+    if images:
+        i = 0
+        result = {}
+
+        for res in images:
+            res_dict = json.loads(res.serialize)
+            result[i] = res_dict
+            i += 1
+        return json.dumps(result)
+    else:
+        data = {
+            'msg': '暂时还没有数据，请联系管理员添加',
+            'status': 404
+        }
+        return jsonify(data)

@@ -98,12 +98,10 @@ class XnjdSpider:
             score_dict['uid'] = uid
             user_score.setattr(score_dict)
             # 判断是否有挂科成绩，如果有，进行更新。
-            find_user = UserScore.query.filter_by(course=score_dict['course'], uid=uid).first()
-            if find_user and float(find_user.score) < 60.0:
+            find_user = UserScore.query.filter_by(course=score_dict['course'], uid=uid, xueqi=score_dict['xueqi']).first()
+            if find_user:
                 with db.auto_commit():
-                    find_user.score = score_dict['score']
-                    find_user.jidian = score_dict['jidian']
-                return '成绩已更新'
+                    find_user.setattr(score_dict)
             else:
                 with db.auto_commit():
                     db.session.add(user_score)
@@ -115,11 +113,10 @@ class XnjdSpider:
             schedule_dict = i
             schedule_dict['uid'] = uid
             user_schedule.setattr(schedule_dict)
-            update_schedule = UserSchedule.query.filter_by(uid=uid).first()
+            update_schedule = UserSchedule.query.filter_by(jie=schedule_dict['jie'], uid=uid).first()
             if update_schedule:
                 with db.auto_commit():
                     update_schedule.setattr(schedule_dict)
-                return '课表已更新'
             else:
                 with db.auto_commit():
                     db.session.add(user_schedule)

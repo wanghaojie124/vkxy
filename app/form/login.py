@@ -1,7 +1,6 @@
-import json
 from threading import Thread
 
-from flask import request, current_app
+from flask import request, current_app, jsonify
 from flask_login import login_user, current_user
 from app.models.user import User
 from spider.Xnjd_login import XnjdLogin
@@ -68,7 +67,6 @@ class LoginController:
                     "uid": user_id,
                     "status": 200,
                 }
-                success_data = json.dumps(success_data)
                 return success_data
             else:
                 log('*****用户名', form['username'], '在登录时发生了错误')

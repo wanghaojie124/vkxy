@@ -4,6 +4,8 @@ from flask_sqlalchemy import BaseQuery
 from sqlalchemy import Column, Integer, Float, String
 from flask_sqlalchemy import SQLAlchemy as _SQLAlchemy
 
+from utils import log
+
 
 class Query(BaseQuery):
 
@@ -22,7 +24,7 @@ class SQLAlchemy(_SQLAlchemy):
             self.session.commit()
         except Exception as e:
             db.session.rollback()
-            raise e
+            log("此处发生了rollback", e)
 
 
 db = SQLAlchemy(query_class=Query)
