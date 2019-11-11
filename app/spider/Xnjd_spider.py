@@ -36,8 +36,10 @@ class XnjdSpider:
                 course = td[4].get_text().strip()
                 xuanxiu = td[6].get_text().strip()
                 xueqi = td[1].get_text().strip()
+                xuefen = td[7].find(attrs={'value': True}).get('value')
                 score = td[9].find(attrs={'value': True}).get('value')
                 jidian = td[12].find(attrs={'value': True}).get('value')
+                xishu = td[13].find(attrs={'value': True}).get('value')
                 course_score = {
                     'xh': self.xh,
                     'name': self.name,
@@ -45,7 +47,9 @@ class XnjdSpider:
                     'xuanxiu': xuanxiu,
                     'score': score,
                     'jidian': jidian,
-                    'xueqi': xueqi
+                    'xueqi': xueqi,
+                    'xuefen': xuefen,
+                    'xishu': xishu
                 }
                 self.score.append(course_score)
 

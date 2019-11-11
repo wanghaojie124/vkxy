@@ -18,7 +18,7 @@ def login():
     if request.method == "GET":
         college = request.args.get('college', '')
         data = controller.main(college, request.method)
-        return data
+        return json.dumps(data)
     if request.method == "POST":
         college = request.get_json().get('college', '')
         data = controller.main(college, request.method)
@@ -43,7 +43,7 @@ def get_scores():
         res_dict.pop('uid')
         result[i] = res_dict
         i += 1
-    return result
+    return json.dumps(result)
 
 
 @web.route("/schedule", methods=["POST"])
@@ -60,7 +60,7 @@ def get_schedule():
         res_dict.pop('uid')
         result[i] = res_dict
         i += 1
-    return result
+    return json.dumps(result)
 
 
 # 微信授权处理
@@ -109,7 +109,7 @@ def refresh():
     if request.method == "GET":
         college = request.args.get('college', '')
         data = controller.main(college, request.method)
-        return data
+        return json.dumps(data)
 
     if request.method == "POST":
         college = request.get_json().get('college', '')

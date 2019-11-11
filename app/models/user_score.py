@@ -14,4 +14,6 @@ class UserScore(Base):
     score = Column(Integer)
     jidian = Column(Float)
     xueqi = Column(String(25))
+    xuefen = Column(Float)
+    xishu = Column(Float)
 
