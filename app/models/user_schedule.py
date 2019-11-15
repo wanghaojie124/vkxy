@@ -17,3 +17,4 @@ class UserSchedule(Base):
     Fri = Column(String(255), default="")
     Sat = Column(String(255), default="")
     Sun = Column(String(255), default="")
+    # week = Column(String(255), default="")

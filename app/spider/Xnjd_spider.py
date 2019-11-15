@@ -20,17 +20,17 @@ class XnjdSpider:
         score_url = 'http://jwc.swjtu.edu.cn/vatuu/StudentScoreInfoAction?setAction=studentMarkFromTerm'
         score_html = self.session.get(score_url)
 
-        page = pq(score_html.content)
-        info = page('.instruction-div.clearfix div strong').text()
-        res = info.split(' ')[0]
-        self.xh = res[:9]
-        self.name = res[10:]
-        if '\xa0' in self.name:
-            self.name = self.name.replace(u'\xa0', '')
-
+        # page = pq(score_html.content)
+        # info = page('.instruction-div.clearfix div strong').text()
+        # # res = info.split(' ')[0]
+        # res = info[:14]
+        # self.xh = res[:10]
+        # self.name = res[10:]
+        # if '\xa0' in self.name:
+        #     self.name = self.name.replace(u'\xa0', '')
         soup = BeautifulSoup(score_html.content, 'lxml')
-        tr = soup.find('table', class_='table_border').find_all('tr')
         try:
+            tr = soup.find('table', class_='table_border').find_all('tr')
             for j in tr[1:]:
                 td = j.find_all('td')
                 course = td[4].get_text().strip()
@@ -52,18 +52,26 @@ class XnjdSpider:
                     'xishu': xishu
                 }
                 self.score.append(course_score)
-
+            return True
         except Exception as e:
-            log(e, '*****未获取到考试成绩，可能本学期未进行过考试')
-        # print(self.score)
+            log(e, '*****未获取到考试成绩，可能本学期未进行过考试或未进行课程评价')
+            return False
 
     def get_schedule(self):
         schedule_url = "http://jwc.swjtu.edu.cn/vatuu/CourseAction?setAction=userCourseScheduleTable&viewType=studentQueryCourseList&selectTableType=ThisTerm&queryType=student"
         schedule_html = self.session.get(schedule_url)
 
+        page = pq(schedule_html.content)
+        info = page('.instruction-div.clearfix div strong').text()
+        # res = info.split(' ')[0]
+        res = info[:14]
+        self.xh = res[:10]
+        self.name = res[10:]
+        if '\xa0' in self.name:
+            self.name = self.name.replace(u'\xa0', '')
         soup = BeautifulSoup(schedule_html.content, 'lxml')
-        tr = soup.find('table', class_='table_border').find_all('tr')
         try:
+            tr = soup.find('table', class_='table_border').find_all('tr')
             for j in tr[1:]:
                 td = j.find_all('td')
                 jie = td[0].get_text().strip()
@@ -91,20 +99,24 @@ class XnjdSpider:
             log(e, "*****获取课表信息失败")
 
     def save_score(self, uid):
-        self.get_score()
-        for i in self.score:
-            user_score = UserScore()
-            score_dict = i
-            score_dict['uid'] = uid
-            user_score.setattr(score_dict)
-            # 判断是否有挂科成绩，如果有，进行更新。
-            find_user = UserScore.query.filter_by(course=score_dict['course'], uid=uid, xueqi=score_dict['xueqi']).first()
-            if find_user:
-                with db.auto_commit():
-                    find_user.setattr(score_dict)
-            else:
-                with db.auto_commit():
-                    db.session.add(user_score)
+        status = self.get_score()
+        if status:
+            for i in self.score:
+                user_score = UserScore()
+                score_dict = i
+                score_dict['uid'] = uid
+                user_score.setattr(score_dict)
+                find_user = UserScore.query.filter_by(
+                    course=score_dict['course'], uid=uid, xueqi=score_dict['xueqi']
+                                                        ).first()
+                if find_user:
+                    with db.auto_commit():
+                        find_user.setattr(score_dict)
+                else:
+                    with db.auto_commit():
+                        db.session.add(user_score)
+        else:
+            return False
 
     def save_schedule(self, uid):
         self.get_schedule()

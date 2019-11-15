@@ -3,12 +3,12 @@ from flask import request, jsonify
 from app.web import web
 from app.models.articles import Articles
 from app.models.base import db
-from app.models.images import Images
+from app.models.banner import Banner
 from app.models.user import User
 
 
 @web.route("/vk/login/", methods=["GET", "POST"])
-def htdl():
+def vk_login():
     if request.method == "GET":
         return 'This is api'
     if request.method == "POST":
@@ -25,7 +25,7 @@ def htdl():
                     }
                 }
             }
-            return json.dumps(resp)
+            return jsonify(resp)
         else:
             return '口令或者用户名错误'
 
@@ -33,14 +33,14 @@ def htdl():
 @web.route("/vk/articlelist", methods=["GET"])
 def get_articles():
     articles = Articles.query.filter_by().all()
+    # TODO 这里要取得nginx代理的静态图片url，保存到image属性中返回
     if articles:
-        i = 0
-        result = {}
-
+        result = []
         for res in articles:
-            res_dict = json.loads(res.serialize)
-            result[i] = res_dict
-            i += 1
+            res_dict = res.to_dict()
+
+            result.append(res_dict)
+
         return jsonify(result)
     else:
         data = {
@@ -55,6 +55,7 @@ def add_articles():
     articles = Articles()
     form = request.get_json()
     article = Articles.query.filter_by(title=form['title']).first()
+    # TODO 这里要写文件保存到本地，将image替换为文件名
     if article:
         with db.auto_commit():
             article.setattr(form)
@@ -74,17 +75,15 @@ def add_articles():
         return data
 
 
-@web.route("/vk/imagelist", methods=["GET"])
+@web.route("/vk/bannerlist", methods=["GET"])
 def get_images():
-    images = Images.query.filter_by().all()
+    images = Banner.query.filter_by().all()
+    # TODO 这里要取得nginx代理的静态图片url，保存到image属性中返回
     if images:
-        i = 0
-        result = {}
-
+        result = []
         for res in images:
-            res_dict = json.loads(res.serialize)
-            result[i] = res_dict
-            i += 1
+            res_dict = res.to_dict()
+            result.append(res_dict)
         return jsonify(result)
     else:
         data = {
@@ -94,11 +93,12 @@ def get_images():
         return jsonify(data)
 
 
-@web.route("/vk/addimage", methods=["POST"])
+@web.route("/vk/addbanner", methods=["POST"])
 def add_images():
-    images = Images()
+    images = Banner()
     form = request.get_json()
-    image = Images.query.filter_by(title=form['title']).first()
+    image = Banner.query.filter_by(title=form['title']).first()
+    # TODO 这里要写文件保存到本地，将image替换为文件名
     if image:
         with db.auto_commit():
             image.setattr(form)
@@ -122,13 +122,10 @@ def add_images():
 def get_users():
     users = User.query.filter_by(college='西南交通大学').all()
     if users:
-        i = 0
-        result = {}
-
+        result = []
         for res in users:
-            res_dict = json.loads(res.serialize)
-            result[i] = res_dict
-            i += 1
+            res_dict = res.to_dict()
+            result.append(res_dict)
         return jsonify(result)
     else:
         data = {
@@ -136,3 +133,4 @@ def get_users():
             'status': 404
         }
         return jsonify(data)
+

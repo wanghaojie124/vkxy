@@ -3,13 +3,12 @@ from threading import Thread
 from flask import request, current_app, jsonify
 from flask_login import login_user, current_user
 from app.models.user import User
-from spider.Xnjd_login import XnjdLogin
-from spider.Xnjd_spider import XnjdSpider
+from app.spider.Xnjd_login import XnjdLogin
+from app.spider.Xnjd_spider import XnjdSpider
 from utils import log
 
 
 class LoginController:
-
     # 异步处理数据，保存user姓名，学校，以及调用该学生学校的方法保存课表和成绩
     def save_async_db(self, app, form, uid, spider):
         with app.app_context():
@@ -83,5 +82,5 @@ class LoginController:
         if college == '西南交通大学':
             data = self.xnjd_login(method)
             return data
-        elif college == '成都工业大学':
+        elif college == '成都工业学院':
             pass
