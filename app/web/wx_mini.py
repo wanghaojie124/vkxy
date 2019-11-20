@@ -1,20 +1,19 @@
 import datetime
 from flask import request, jsonify, render_template
-import json
+from app.config import IMAGE_URL
 from app.models.user_schedule import UserSchedule
 from app.models.user_score import UserScore
-from app.config import WECHAT_APPSECRET, WECHAT_APPID
-import requests
-from app.models.base import db
 from app.web import web
-from app.form.refresh import RefreshController
-from app.models.wx_user import WxUser
-from app.form.login import LoginController
+from app.view_models.refresh import RefreshController
+from app.view_models.login import LoginController
 from app.models.articles import Articles
 from app.models.banner import Banner
 from app.static.image.dirname import IMAGE_PATH
-from app.form.assess import AssessController
+from app.view_models.assess import AssessController
 from utils import log, white_list, black_list, get_week_day
+from app.view_models.wx_user import WxUserViewModel
+from app.view_models.schedule import ScheduleController
+from app.view_models.articles import ArticleController
 
 
 @web.route('/login', methods=["GET", "POST"])
@@ -54,82 +53,19 @@ def get_schedule():
     # 返回json格式的个人课表信息
     uid = request.get_json().get('uid', '')
     college = request.get_json().get('college', '')
-    if college == "西南交通大学":
-        res_list = UserSchedule.query.filter_by(uid=uid).all()
-        result = []
-        for res in res_list:
-            res_dict = res.to_dict()
-            exce = ['id', 'uid', 'status']
-            res_dict = black_list(res_dict, exce)
-            # 课程名称处理，拆开为课程名称，上课周数，上课地点，老师
-            for k, v in res_dict.items():
-                if isinstance(v, str) and '\xa0' in v:
-                    v = v.split('\xa0')[1:]
-                    try:
-                        v2 = v[1]
-                        v0 = v[0].split('）', 1)[0] + '）'
-                        v1 = v[0].split('）', 1)[1]
-                        v3 = '（' + v0.split('（', 1)[1]
-                        v0 = v0.split('（', 1)[0]
-                        v = [v0, v1, v2, v3]
-                        res_dict[k] = v
-                    except Exception as e:
-                        log('*****在处理课程名称时发生了错误', e)
-                    else:
-                        res_dict[k] = v
-            result.append(res_dict)
-        return jsonify(result)
-    else:
-        info = {
-            'status': 404,
-            'msg': '需要参数college'
-        }
-        return jsonify(info)
+    controller = ScheduleController()
+    resp = controller.main(college, uid)
+    return jsonify(resp)
 
 
 # 微信授权处理
 @web.route("/user/getuserinfo", methods=["GET", "POST"])
 def get_user_info():
-    resp = {'code': 200, 'msg': '操作成功', 'data': {}}
-    req = request.values
-    code = req['code'] if 'code' in req else ''
-    if not code or len(code) < 1:
-        resp['code'] = -1
-        resp['msg'] = '需要code'
-        log('获取个人信息时，无有效code')
-        return jsonify(resp)
-
-    url = "https://api.weixin.qq.com/sns/jscode2session?appid=%s&secret=%s&js_code=%s&grant_type=authorization_code" % \
-          (WECHAT_APPID, WECHAT_APPSECRET, code)
-    r = requests.get(url)
-    res = json.loads(r.text)
-
-    user = WxUser()
-    user_data = {
-        'nickname': req['nickName'],
-        'gender': req['gender'],
-        'avatar_url': req['avatarUrl'],
-        'city': req['city'],
-        'province': req['province'],
-        'session_key': res['session_key'],
-        'openid': res['openid'],
-    }
-
-    wx_user = WxUser.query.filter_by(openid=user_data['openid']).first()
-    if wx_user:
-        with db.auto_commit():
-            wx_user.setattr(user_data)
-    else:
-        with db.auto_commit():
-            user.setattr(user_data)
-            db.session.add(user)
-    exce = ['gender', 'session_key', 'city', 'province']
-    user_info = black_list(user_data, exce)
-    resp['data'] = user_info
+    wx_user = WxUserViewModel()
+    resp = wx_user.get_openid()
     return jsonify(resp)
 
 
-# 刷新课程表以及成绩
 @web.route("/refresh", methods=["GET", "POST"])
 def refresh():
     controller = RefreshController()
@@ -151,23 +87,23 @@ def get_articles_info():
     limit = int(request.args.get('limit', 20))
     college = request.args.get('college', '')
     article_type = request.args.get('type', '')
-    if article_type:
-        paginate = Articles.query.filter_by(college=college, type=article_type).order_by(Articles.weight.desc()).paginate(page, limit, error_out=False)
-    else:
-        paginate = Articles.query.filter_by(college=college).order_by(Articles.weight.desc()).paginate(page, limit, error_out=False)
-    articles = paginate.items
-    # TODO 这里要取得nginx代理的静态图片url，保存到image属性中返回
-    if articles:
-        data = []
-        result = {
-            'pages': paginate.pages
-        }
-        for res in articles:
+    articles = ArticleController()
+    resp = articles.get_mini_articles(article_type, college, page, limit)
+    return jsonify(resp)
+
+
+@web.route("/bannerlist", methods=["GET"])
+def get_image_info():
+    college = request.args.get('college', '')
+    images = Banner.query.filter_by(college=college, special=0).all()
+    if images:
+        result = []
+        for res in images:
             res_dict = res.to_dict()
-            exce = ['college', 'id', 'status']
-            res_dict = black_list(res_dict, exce)
-            data.append(res_dict)
-        result['data'] = data
+            wonder = ['weight', 'mini', 'link', 'image']
+            res_dict = white_list(res_dict, wonder)
+            res_dict['image'] = IMAGE_URL + res_dict['image']
+            result.append(res_dict)
         return jsonify(result)
     else:
         data = {
@@ -177,28 +113,7 @@ def get_articles_info():
         return jsonify(data)
 
 
-@web.route("/bannerlist", methods=["GET"])
-def get_image_info():
-    college = request.args.get('college', '')
-    images = Banner.query.filter_by(college=college, special=0).all()
-    # TODO 这里要取得nginx代理的静态图片url，保存到image属性中返回
-
-    if images:
-        result = []
-        for res in images:
-            res_dict = res.to_dict()
-            wonder = ['weight', 'mini', 'link', 'image']
-            res_dict = white_list(res_dict, wonder)
-            result.append(res_dict)
-        return json.dumps(result)
-    else:
-        data = {
-            'msg': '暂时还没有数据，请联系管理员添加',
-            'status': 404
-        }
-        return jsonify(data)
-
-
+# 公告栏
 @web.route("/top", methods=["GET"])
 def get_top_news():
     college = request.args.get('college', '')
@@ -224,19 +139,20 @@ def get_top_news():
         return jsonify(info)
 
 
+# 今日特价
 @web.route("/special", methods=["GET"])
 def get_special():
     college = request.args.get('college', '')
     images = Banner.query.filter_by(college=college, special=1).all()
-    # TODO 这里要取得nginx代理的静态图片url，保存到image属性中返回
     if images:
         result = []
         for res in images:
             res_dict = res.to_dict()
             wonder = ['title', 'image', 'price', 'bargain_price', 'mini', 'link']
             res_dict = white_list(res_dict, wonder)
+            res_dict['image'] = IMAGE_URL + res_dict['image']
             result.append(res_dict)
-        return json.dumps(result)
+        return jsonify(result)
     else:
         data = {
             'msg': '暂时还没有数据，请联系管理员添加',
@@ -253,11 +169,13 @@ def test():
     if request.method == "POST":
         image = request.files['image']
         path = IMAGE_PATH + '\\'
-        file_path = path + datetime.datetime.now().strftime('%Y%m%d%H%M%S') + '.jpg'
+        file_name = datetime.datetime.now().strftime('%Y%m%d%H%M%S') + '.jpg'
+        file_path = path + file_name
         image.save(file_path)
         return 'ok'
 
 
+# 今日课表
 @web.route("/todayclass", methods=["POST"])
 def get_today_class():
     # 返回json格式的个人成绩信息
@@ -298,6 +216,7 @@ def get_today_class():
         return jsonify(info)
 
 
+# 一键评课
 @web.route("/assess", methods=["GET", "POST"])
 def make_assess():
     controller = AssessController()

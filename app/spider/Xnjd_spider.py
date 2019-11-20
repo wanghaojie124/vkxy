@@ -20,14 +20,6 @@ class XnjdSpider:
         score_url = 'http://jwc.swjtu.edu.cn/vatuu/StudentScoreInfoAction?setAction=studentMarkFromTerm'
         score_html = self.session.get(score_url)
 
-        # page = pq(score_html.content)
-        # info = page('.instruction-div.clearfix div strong').text()
-        # # res = info.split(' ')[0]
-        # res = info[:14]
-        # self.xh = res[:10]
-        # self.name = res[10:]
-        # if '\xa0' in self.name:
-        #     self.name = self.name.replace(u'\xa0', '')
         soup = BeautifulSoup(score_html.content, 'lxml')
         try:
             tr = soup.find('table', class_='table_border').find_all('tr')
@@ -115,6 +107,7 @@ class XnjdSpider:
                 else:
                     with db.auto_commit():
                         db.session.add(user_score)
+            return True
         else:
             return False
 
