@@ -1,7 +1,5 @@
 import datetime
 from flask import request, jsonify
-
-from app.config import IMAGE_URL
 from app.web import web
 from app.models.base import db
 from app.models.banner import Banner
@@ -18,6 +16,7 @@ def vk_login():
     if request.method == "GET":
         return 'This is api'
     if request.method == "POST":
+        print(request.values)
         form = request.get_json()
         admin = Administrators.query.filter_by(username=form['username']).first()
         if form['username'] == admin.username and form['password'] == admin.password:
@@ -78,7 +77,7 @@ def get_images():
         }
         for res in banners.items:
             res_dict = res.to_dict()
-            res_dict['image'] = IMAGE_URL + res_dict['image']
+            # res_dict['image'] = 'http://129.204.61.233:2000/images/' + res_dict['image']
             data.append(res_dict)
         result['data'] = data
         return jsonify(result)
@@ -96,6 +95,7 @@ def add_banners():
     banner = Banner()
     form = request.form
     banner_item = Banner.query.filter_by(title=form['title']).first()
+    # TODO 这里要写文件保存到本地，将image替换为文件名 done
     image = request.files.get['image']
     path = IMAGE_PATH + '\\'
     if banner_item:
@@ -174,7 +174,7 @@ def update_banner():
     if request.method == "GET":
         if banner_item:
             res = banner_item.to_dict()
-            res['image'] = IMAGE_URL + res['image']
+            # res['image'] = 'http://129.204.61.233:2000/images/' + res['image']
             return jsonify(res)
         else:
             data = {

@@ -1,6 +1,7 @@
 import datetime
+
 from flask import request
-from app.config import IMAGE_URL
+
 from app.models.articles import Articles
 from app.models.base import db
 from app.static.image.dirname import IMAGE_PATH
@@ -24,7 +25,7 @@ class ArticleController:
             for res in articles:
                 res_dict = res.to_dict()
                 exce = ['college', 'id', 'status']
-                res_dict['image'] = IMAGE_URL + res_dict['image']
+                res_dict['image'] = 'http://129.204.61.233:2000/images/' + res_dict['image']
                 res_dict = black_list(res_dict, exce)
                 data.append(res_dict)
             result['data'] = data
@@ -52,7 +53,7 @@ class ArticleController:
             }
             for res in articles.items:
                 res_dict = res.to_dict()
-                res_dict['image'] = IMAGE_URL + res_dict['image']
+                # res_dict['image'] = 'http://129.204.61.233:2000/images/' + res_dict['image']
                 data.append(res_dict)
             result['data'] = data
             return result
@@ -101,7 +102,7 @@ class ArticleController:
         if request.method == "GET":
             if article_item:
                 res = article_item.to_dict()
-                res['image'] = IMAGE_URL + res['image']
+                # res['image'] = 'http://129.204.61.233:2000/images/' + res['image']
                 return res
             else:
                 data = {
