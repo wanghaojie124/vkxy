@@ -1,4 +1,6 @@
 from flask import request, jsonify, render_template
+
+from app.config import IMAGE_DOMAIN
 from app.models.user_score import UserScore
 from app.web import web
 from app.view_models.refresh import RefreshController
@@ -93,15 +95,13 @@ def get_articles_info():
 def get_image_info():
     college = request.args.get('college', '')
     images = Banner.query.filter_by(college=college, special=0).all()
-    # TODO 这里要取得nginx代理的静态图片url，保存到image属性中返回 done
-
     if images:
         result = []
         for res in images:
             res_dict = res.to_dict()
             wonder = ['weight', 'mini', 'link', 'image']
             res_dict = white_list(res_dict, wonder)
-            res_dict['image'] = 'http://129.204.61.233:2000/images/' + res_dict['image']
+            res_dict['image'] = IMAGE_DOMAIN + res_dict['image']
             result.append(res_dict)
         return jsonify(result)
     else:
@@ -149,7 +149,7 @@ def get_special():
             res_dict = res.to_dict()
             wonder = ['title', 'image', 'price', 'bargain_price', 'mini', 'link']
             res_dict = white_list(res_dict, wonder)
-            res_dict['image'] = 'http://129.204.61.233:2000/images/' + res_dict['image']
+            res_dict['image'] = IMAGE_DOMAIN + res_dict['image']
             result.append(res_dict)
         return jsonify(result)
     else:

@@ -1,5 +1,7 @@
 import datetime
 from flask import request, jsonify
+
+from app.config import IMAGE_DOMAIN
 from app.web import web
 from app.models.base import db
 from app.models.banner import Banner
@@ -77,7 +79,7 @@ def get_images():
         }
         for res in banners.items:
             res_dict = res.to_dict()
-            # res_dict['image'] = 'http://129.204.61.233:2000/images/' + res_dict['image']
+            res_dict['image'] = IMAGE_DOMAIN + res_dict['image']
             data.append(res_dict)
         result['data'] = data
         return jsonify(result)
@@ -174,7 +176,7 @@ def update_banner():
     if request.method == "GET":
         if banner_item:
             res = banner_item.to_dict()
-            # res['image'] = 'http://129.204.61.233:2000/images/' + res['image']
+            res['image'] = IMAGE_DOMAIN + res['image']
             return jsonify(res)
         else:
             data = {
