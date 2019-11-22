@@ -56,4 +56,14 @@ def get_week_day(date):
     day = date.weekday()
     return week_day_dict[day]
 
-# print((datetime.datetime.now() - datetime.timedelta(days= 4)).strftime('%a'))
+# print((datetime.datetime.now() - datetime.timedelta(days= 4)).strftime('%a')).
+
+
+def get_current_week(start_date, search_date):
+    try:
+        start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d')
+        search_date = datetime.datetime.strptime(search_date, '%Y-%m-%d')
+        week = int(search_date.strftime('%W')) - int(start_date.strftime('%W')) + 1
+        return week
+    except Exception as ex:
+        log(Exception, ':', ex)
