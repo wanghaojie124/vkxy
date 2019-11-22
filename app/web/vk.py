@@ -16,8 +16,8 @@ def vk_login():
     if request.method == "GET":
         return 'This is api'
     if request.method == "POST":
-        print(request.values)
-        form = request.get_json()
+        form = request.form.to_dict()
+        print(form)
         admin = Administrators.query.filter_by(username=form['username']).first()
         if form['username'] == admin.username and form['password'] == admin.password:
             login_user(admin)
@@ -96,8 +96,8 @@ def add_banners():
     form = request.form
     banner_item = Banner.query.filter_by(title=form['title']).first()
     # TODO 这里要写文件保存到本地，将image替换为文件名 done
-    image = request.files.get['image']
-    path = IMAGE_PATH + '\\'
+    image = request.files['image']
+    path = IMAGE_PATH + '/'
     if banner_item:
         file_name = banner_item.image
         file_path = path + file_name
@@ -187,7 +187,7 @@ def update_banner():
             with db.auto_commit():
                 banner_item.setattr(form)
         else:
-            path = IMAGE_PATH + '\\'
+            path = IMAGE_PATH + '/'
             file_name = banner_item.image
             image = request.files.get('image', '')
             if image:

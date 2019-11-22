@@ -53,7 +53,7 @@ class ArticleController:
             }
             for res in articles.items:
                 res_dict = res.to_dict()
-                # res_dict['image'] = 'http://129.204.61.233:2000/images/' + res_dict['image']
+                res_dict['image'] = 'http://129.204.61.233:2000/images/' + res_dict['image']
                 data.append(res_dict)
             result['data'] = data
             return result
@@ -69,7 +69,7 @@ class ArticleController:
         form = request.form
         article = Articles.query.filter_by(title=form['title']).first()
         image = request.files['image']
-        path = IMAGE_PATH + '\\'
+        path = IMAGE_PATH + '/'
         if article:
             file_name = article.image
             file_path = path + file_name
@@ -102,7 +102,7 @@ class ArticleController:
         if request.method == "GET":
             if article_item:
                 res = article_item.to_dict()
-                # res['image'] = 'http://129.204.61.233:2000/images/' + res['image']
+                res['image'] = 'http://129.204.61.233:2000/images/' + res['image']
                 return res
             else:
                 data = {
@@ -115,9 +115,9 @@ class ArticleController:
                 with db.auto_commit():
                     article_item.setattr(form)
             else:
-                path = IMAGE_PATH + '\\'
+                path = IMAGE_PATH + '/'
                 file_name = article_item.image
-                image = request.files.get('image', '')
+                image = request.files['image']
                 if image:
                     file_name = datetime.datetime.now().strftime('%Y%m%d%H%M%S') + '.jpg'
                     file_path = path + file_name

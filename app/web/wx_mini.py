@@ -1,13 +1,10 @@
-import datetime
 from flask import request, jsonify, render_template
-from app.models.user_schedule import UserSchedule
 from app.models.user_score import UserScore
 from app.web import web
 from app.view_models.refresh import RefreshController
 from app.view_models.login import LoginController
 from app.models.articles import Articles
 from app.models.banner import Banner
-from app.static.image.dirname import IMAGE_PATH
 from app.view_models.assess import AssessController
 from utils import log, white_list, black_list, get_week_day
 from app.view_models.wx_user import WxUserViewModel
@@ -52,8 +49,9 @@ def get_schedule():
     # 返回json格式的个人课表信息
     uid = request.get_json().get('uid', '')
     college = request.get_json().get('college', '')
+    request_week = request.get_json().get('request_week', '')
     controller = ScheduleController()
-    resp = controller.main(college, uid)
+    resp = controller.main(college, uid, request_week)
     return jsonify(resp)
 
 
@@ -103,7 +101,7 @@ def get_image_info():
             res_dict = res.to_dict()
             wonder = ['weight', 'mini', 'link', 'image']
             res_dict = white_list(res_dict, wonder)
-            # res_dict['image'] = 'http://129.204.61.233:2000/images/' + res_dict['image']
+            res_dict['image'] = 'http://129.204.61.233:2000/images/' + res_dict['image']
             result.append(res_dict)
         return jsonify(result)
     else:
@@ -145,7 +143,6 @@ def get_top_news():
 def get_special():
     college = request.args.get('college', '')
     images = Banner.query.filter_by(college=college, special=1).all()
-    # TODO 这里要取得nginx代理的静态图片url，保存到image属性中返回 done
     if images:
         result = []
         for res in images:
@@ -163,59 +160,15 @@ def get_special():
         return jsonify(data)
 
 
-# 后台上传图片预备代码
-@web.route("/test", methods=["GET", "POST"])
-def test():
-    if request.method == "GET":
-        return render_template('404.html')
-    if request.method == "POST":
-        image = request.files['image']
-        path = IMAGE_PATH + '\\'
-        file_name = datetime.datetime.now().strftime('%Y%m%d%H%M%S') + '.jpg'
-        file_path = path + file_name
-        image.save(file_path)
-        return 'ok'
-
-
 # 今日课表
 @web.route("/todayclass", methods=["POST"])
 def get_today_class():
     # 返回json格式的个人成绩信息
     uid = request.get_json().get('uid', '')
-    weekday = get_week_day(datetime.datetime.now())
     college = request.get_json().get('college', '')
-    if college == "西南交通大学":
-        res_list = UserSchedule.query.filter_by(uid=uid).all()
-        result = []
-        for res in res_list:
-            res_dict = res.to_dict()
-            wonder = ['jie', weekday]
-            res_dict = white_list(res_dict, wonder)
-            # 课程名称处理，拆开为课程名称，上课周数，上课地点，老师
-            for k, v in res_dict.items():
-                if isinstance(v, str) and '\xa0' in v:
-                    v = v.split('\xa0')[1:]
-                    try:
-                        v2 = v[1]
-                        v0 = v[0].split('）', 1)[0] + '）'
-                        v1 = v[0].split('）', 1)[1]
-                        v3 = '（' + v0.split('（', 1)[1]
-                        v0 = v0.split('（', 1)[0]
-                        v = [v0, v1, v2, v3]
-                        res_dict[k] = v
-                    except Exception as e:
-                        log('*****在处理课程名称时发生了错误', e)
-                    else:
-                        res_dict[k] = v
-            result.append(res_dict)
-        return jsonify(result)
-    else:
-        info = {
-            'status': 404,
-            'msg': '需要参数college'
-        }
-        log("*****请求今日课表时缺少college参数")
-        return jsonify(info)
+    controller = ScheduleController()
+    resp = controller.today_schedule_main(college, uid)
+    return jsonify(resp)
 
 
 # 一键评课
