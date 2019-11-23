@@ -118,7 +118,7 @@ class ArticleController:
             else:
                 path = IMAGE_PATH + '/'
                 file_name = article_item.image
-                image = request.files['image']
+                image = request.files.get('image', '')
                 if image:
                     file_name = datetime.datetime.now().strftime('%Y%m%d%H%M%S') + '.jpg'
                     file_path = path + file_name
