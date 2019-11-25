@@ -48,7 +48,7 @@ class Base(db.Model):
     __abstract__ = True
     __table_args__ = {"keep_existing": True}
     status = Column(Integer, default=1)
-    create_at = Column(DateTime, default=datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S'))
+    create_at = Column(DateTime, default=datetime.datetime.now)
 
     def setattr(self, attr_dict):
         for key, value in attr_dict.items():
