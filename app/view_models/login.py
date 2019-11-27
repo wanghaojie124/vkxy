@@ -14,8 +14,9 @@ class LoginController:
         with app.app_context():
             try:
                 user = User()
-                spider.save_score(uid)
+                # 此处先调用save_schedule, 否则xh和name会为空
                 spider.save_schedule(uid)
+                spider.save_score(uid)
                 # 保存用户姓名及学校
                 user.save_name(form['username'], spider.name, spider.college)
                 log(uid, "*****存储数据完毕")

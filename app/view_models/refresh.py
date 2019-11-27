@@ -26,8 +26,8 @@ class RefreshController:
 
             if xnjd.login_test(session):
                 spider = XnjdSpider(session)
-                status = spider.save_score(form['uid'])
                 spider.save_schedule(form['uid'])
+                status = spider.save_score(form['uid'])
                 data = {
                     'status': 200,
                     'msg': '已更新数据'
