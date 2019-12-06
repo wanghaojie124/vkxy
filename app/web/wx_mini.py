@@ -2,6 +2,7 @@ from flask import request, jsonify, render_template
 
 from app.config import IMAGE_DOMAIN
 from app.models.user_score import UserScore
+from app.models.user_total_score import UserTotalScore
 from app.web import web
 from app.view_models.refresh import RefreshController
 from app.view_models.login import LoginController
@@ -37,13 +38,24 @@ def get_scores():
     # 返回json格式的个人成绩信息
     uid = request.get_json().get('uid', '')
     res_list = UserScore.query.filter_by(uid=uid).order_by(UserScore.xueqi.desc()).all()
-    result = []
+    total_info = UserTotalScore.query.filter_by(uid=uid).first()
+    data = {}
+    courses = []
+    averages = []
     for res in res_list:
         res_dict = res.to_dict()
         exce = ['id', 'uid', 'status']
         res_dict = black_list(res_dict, exce)
-        result.append(res_dict)
-    return jsonify(result)
+        courses.append(res_dict)
+    data['courses'] = courses
+    if total_info:
+        total_info = total_info.to_dict()
+        exce = ['id', 'uid', 'status']
+        total_info = black_list(total_info, exce)
+        averages.append(total_info)
+        data['averages'] = averages
+
+    return jsonify(data)
 
 
 @web.route("/schedule", methods=["POST"])
@@ -61,7 +73,9 @@ def get_schedule():
 @web.route("/user/getuserinfo", methods=["GET", "POST"])
 def get_user_info():
     wx_user = WxUserViewModel()
-    resp = wx_user.get_openid()
+    req = request.values
+    college = req['college'] if 'college' in req else ''
+    resp = wx_user.main(college)
     return jsonify(resp)
 
 
@@ -94,10 +108,10 @@ def get_articles_info():
 @web.route("/bannerlist", methods=["GET"])
 def get_image_info():
     college = request.args.get('college', '')
-    images = Banner.query.filter_by(college=college, special=0).all()
-    if images:
+    banners = Banner.query.filter_by(college=college, special=0).order_by(Banner.weight.desc()).all()
+    if banners:
         result = []
-        for res in images:
+        for res in banners:
             res_dict = res.to_dict()
             wonder = ['weight', 'mini', 'link', 'image']
             res_dict = white_list(res_dict, wonder)
@@ -116,7 +130,7 @@ def get_image_info():
 @web.route("/top", methods=["GET"])
 def get_top_news():
     college = request.args.get('college', '')
-    if college == "西南交通大学":
+    if college:
         articles = Articles.query.filter_by(college=college, on_index=1).all()
         if articles:
             result = []

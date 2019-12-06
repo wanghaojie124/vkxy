@@ -32,7 +32,6 @@ class User(UserMixin, Base):
             # db.session.commit()
         else:
             with db.auto_commit():
-                print('准备创建user')
                 self.setattr(form)
                 db.session.add(self)
                 # db.session.commit()

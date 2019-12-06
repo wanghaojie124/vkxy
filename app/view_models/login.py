@@ -1,10 +1,11 @@
 from threading import Thread
-
-from flask import request, current_app, jsonify
+from flask import request, current_app
 from flask_login import login_user, current_user
 from app.models.user import User
-from app.spider.Xnjd_login import XnjdLogin
-from app.spider.Xnjd_spider import XnjdSpider
+from app.spider.scsd.scsd_login import ScsdLogin
+from app.spider.scsd.scsd_spider import ScsdSpider
+from app.spider.xnjd.Xnjd_login import XnjdLogin
+from app.spider.xnjd.Xnjd_spider import XnjdSpider
 from utils import log
 
 
@@ -14,7 +15,7 @@ class LoginController:
         with app.app_context():
             try:
                 user = User()
-                # 此处先调用save_schedule, 否则xh和name会为空
+                # 先调用schedule，确保xh与name不会为空
                 spider.save_schedule(uid)
                 spider.save_score(uid)
                 # 保存用户姓名及学校
@@ -76,6 +77,52 @@ class LoginController:
                     "status": 404,
                 }
 
+    def scsd_login(self, method):
+        scsd = ScsdLogin()
+
+        if method == "GET":
+            image_base64, cookies_str = scsd.get_captcha_and_cookie()
+
+            info = {
+                'image_base64': image_base64,
+                'cookies_str': cookies_str,
+            }
+            return info
+
+        if method == "POST":
+            form = request.get_json()
+            session = scsd.active_cookies(form)
+
+            # TODO 进行是否登入教务系统判断
+            if scsd.is_login:
+                # 在登录进入教务系统后，进行如下操作
+                # 实例化User，并保存入数据库
+                user = User()
+                user.save_to_db(form)
+                # 将user数据传入login_user方便获取当前用户信息
+                user = User.query.filter_by(username=form['username']).first()
+                login_user(user)
+                uid = current_user.id
+
+                # 定义一个新的函数，开启新线程异步将输入存入数据库
+                spider = ScsdSpider(session, scsd.domain, form['username'])
+                self.save_to_db(form, uid, spider)
+                spider.save_total_score(uid)
+
+                user = User.query.filter_by(username=form['username']).first()
+                success_data = {
+                    "username": user.username,
+                    "name": user.name,
+                    "uid": user.id,
+                    "status": 200,
+                }
+                return success_data
+            else:
+                log('*****用户名', form['username'], '在登录时发生了错误')
+                return {
+                    "status": 404,
+                }
+
     # 成都工业学院登录函数
     def cdgy_login(self, method):
         pass
@@ -87,3 +134,6 @@ class LoginController:
             return data
         elif college == '成都工业学院':
             pass
+        elif college == '四川师范大学':
+            data = self.scsd_login(method)
+            return data

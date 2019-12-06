@@ -1,7 +1,7 @@
 from flask import request
 
-from app.spider.xnjd_assess import Assess
-from app.spider.Xnjd_login import XnjdLogin
+from app.spider.xnjd.xnjd_assess import Assess
+from app.spider.xnjd.Xnjd_login import XnjdLogin
 from app.models.user import User
 from utils import log
 

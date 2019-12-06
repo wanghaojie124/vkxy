@@ -19,7 +19,6 @@ def vk_login():
         return 'This is api'
     if request.method == "POST":
         form = request.form.to_dict()
-        print(form)
         admin = Administrators.query.filter_by(username=form['username']).first()
         if form['username'] == admin.username and form['password'] == admin.password:
             login_user(admin)
@@ -97,7 +96,6 @@ def add_banners():
     banner = Banner()
     form = request.form
     banner_item = Banner.query.filter_by(title=form['title']).first()
-    # TODO 这里要写文件保存到本地，将image替换为文件名 done
     image = request.files['image']
     path = IMAGE_PATH + '/'
     if banner_item:
@@ -147,7 +145,7 @@ def get_users():
         }
         for res in users.items:
             res_dict = res.to_dict()
-            exce = ['status', 'password', 'college', 'openid']
+            exce = ['status', 'college', 'openid']
             res_dict = black_list(res_dict, exce)
             data.append(res_dict)
         result['data'] = data
