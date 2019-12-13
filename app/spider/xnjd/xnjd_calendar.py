@@ -1,9 +1,7 @@
 # 获取西南交通大学校历
 import json
 import time
-
 import requests
-
 from utils import getuser_agent
 
 

@@ -5,8 +5,8 @@ from flask import request
 from app.config import IMAGE_DOMAIN
 from app.models.articles import Articles
 from app.models.base import db
-from app.static.image.dirname import IMAGE_PATH
-from utils import black_list
+from image.dirname import IMAGE_PATH
+from utils import black_list, upload_qiniu
 
 
 class ArticleController:
@@ -75,6 +75,7 @@ class ArticleController:
             file_name = article.image
             file_path = path + file_name
             image.save(file_path)
+            upload_qiniu(path, file_name)
             with db.auto_commit():
                 article.setattr(form)
                 article.image = file_name
@@ -87,6 +88,7 @@ class ArticleController:
             file_name = datetime.datetime.now().strftime('%Y%m%d%H%M%S') + '.jpg'
             file_path = path + file_name
             image.save(file_path)
+            upload_qiniu(path, file_name)
             with db.auto_commit():
                 articles.setattr(form)
                 articles.image = file_name
@@ -123,6 +125,7 @@ class ArticleController:
                     file_name = datetime.datetime.now().strftime('%Y%m%d%H%M%S') + '.jpg'
                     file_path = path + file_name
                     image.save(file_path)
+                    upload_qiniu(path, file_name)
                 with db.auto_commit():
                     article_item.setattr(form)
                     article_item.image = file_name

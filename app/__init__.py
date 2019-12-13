@@ -8,9 +8,8 @@ login_manager = LoginManager()
 
 def create_app():
     app = Flask(__name__,
-            static_folder="../dist/static",
-            template_folder="../dist")
-    # app = Flask(__name__)
+                static_folder="../dist/static",
+                template_folder="../dist")
     CORS(app, supports_credentials=True, resources=r'/*')
     app.config.from_object('app.config')
 
@@ -20,7 +19,6 @@ def create_app():
     register_blueprint(app)
 
     with app.app_context():
-
         db.create_all(app=app)
 
     return app

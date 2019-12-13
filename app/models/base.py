@@ -4,7 +4,6 @@ from contextlib import contextmanager
 from flask_sqlalchemy import BaseQuery
 from sqlalchemy import Column, Integer, DateTime
 from flask_sqlalchemy import SQLAlchemy as _SQLAlchemy
-
 from utils import log
 
 
@@ -25,7 +24,7 @@ class SQLAlchemy(_SQLAlchemy):
             self.session.commit()
         except Exception as e:
             db.session.rollback()
-            log("此处发生了rollback", e)
+            log("此处rollback", e)
 
 
 db = SQLAlchemy(query_class=Query)

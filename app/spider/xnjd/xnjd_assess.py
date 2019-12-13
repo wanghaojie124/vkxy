@@ -7,7 +7,7 @@ from app.spider.spiderbase import SpiderBase
 from utils import log
 
 
-class Assess(SpiderBase):
+class XnjdAssess(SpiderBase):
     # 评课url
     assess_list_url = 'http://jwc.swjtu.edu.cn/vatuu/AssessAction?setAction=list'
     # 提交url

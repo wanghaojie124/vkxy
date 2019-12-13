@@ -8,8 +8,8 @@ from app.models.banner import Banner
 from app.models.user import User
 from flask_login import login_required, login_user
 from app.models.administrators import Administrators
-from app.static.image.dirname import IMAGE_PATH
-from utils import black_list
+from image.dirname import IMAGE_PATH
+from utils import black_list, upload_qiniu
 from app.view_models.articles import ArticleController
 
 
@@ -102,6 +102,7 @@ def add_banners():
         file_name = banner_item.image
         file_path = path + file_name
         image.save(file_path)
+        upload_qiniu(path, file_name)
         with db.auto_commit():
             banner_item.setattr(form)
             banner_item.image = file_name
@@ -114,6 +115,7 @@ def add_banners():
         file_name = datetime.datetime.now().strftime('%Y%m%d%H%M%S') + '.jpg'
         file_path = path + file_name
         image.save(file_path)
+        upload_qiniu(path, file_name)
         with db.auto_commit():
             banner.setattr(form)
             banner.image = file_name
@@ -194,6 +196,7 @@ def update_banner():
                 file_name = datetime.datetime.now().strftime('%Y%m%d%H%M%S') + '.jpg'
                 file_path = path + file_name
                 image.save(file_path)
+                upload_qiniu(path, file_name)
             with db.auto_commit():
                 banner_item.setattr(form)
                 banner_item.image = file_name
