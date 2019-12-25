@@ -2,6 +2,7 @@ import requests
 import base64
 import json
 
+from app.config import CAPTCHA_DISCERN_URL
 from app.spider.spiderbase import SpiderBase
 from utils import log, getuser_agent
 
@@ -40,10 +41,19 @@ class XnjdLogin(SpiderBase):
 
     def active_cookies(self, form):
         session = self.make_session()
-        captcha_code = form["code"]
+
+        image_base64, cookies_str = self.get_captcha_and_cookie()
+        data = {
+            "image": image_base64,
+        }
+        r = requests.post(url=CAPTCHA_DISCERN_URL, json=data)
+        data = r.json()
+        captcha_code = data["message"] if data["code"] == 0 else ''
+
+        # captcha_code = form["code"]
         username = form["username"]
         password = form["password"]
-        cookies_str = form["cookies_str"]
+        # cookies_str = form["cookies_str"]
         cookies = json.loads(cookies_str)
         for k, v in cookies.items():
             session.cookies.set(name=k, value=v)

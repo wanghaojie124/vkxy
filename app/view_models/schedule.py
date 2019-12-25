@@ -1,12 +1,13 @@
 from datetime import datetime
-from app.spider.scdx.scdx_calendar import SCDX_BEGIN_DATE, SCDX_TOTAL_WEEKS
+
+from app.models.scdx_next_term_schedule import ScdxNextTermSchedule
+from app.spider.scdx.scdx_calendar import SCDX_BEGIN_DATE, SCDX_TOTAL_WEEKS, SCDX_TERM2
 from app.models.scdx_schedule import ScdxSchedule
 from app.models.user_schedule import UserSchedule
 from app.spider.scsd.scsd_calendar import get_scsd_calendar
 from app.spider.xnjd.xnjd_calendar import get_xnjd_calendar
-from utils import log, black_list, white_list, get_week_day
+from utils import log, black_list, white_list, get_week_day, get_current_week, get_need_week
 import re
-from utils import get_current_week
 
 
 class ScheduleController:
@@ -395,10 +396,16 @@ class ScheduleController:
             result.append(res_dict)
         return result
 
-    def scdx_schedule(self, uid, request_week):
-        res_list = ScdxSchedule.query.filter_by(uid=uid).all()
+    def scdx_schedule(self, uid, request_week, request_term):
+        if request_term == 'next':
+            res_list = ScdxNextTermSchedule.query.filter_by(uid=uid).all()
+            date = SCDX_TERM2
+            current_week = get_need_week(date, request_week)
+        else:
+            res_list = ScdxSchedule.query.filter_by(uid=uid).all()
+            date = SCDX_BEGIN_DATE
+            current_week = get_current_week(date, datetime.now().strftime('%Y-%m-%d'))
         result = []
-        current_week = get_current_week(SCDX_BEGIN_DATE, datetime.now().strftime('%Y-%m-%d'))
         for i in range(1, 14):
             data = {
                 'jie': '',
@@ -463,7 +470,7 @@ class ScheduleController:
                         i.update(res_dict)
         return result
 
-    def main(self, college, uid, request_week):
+    def main(self, college, uid, request_week, request_term):
         if college == '西南交通大学':
             data = self.xnjd_schedule(uid, request_week)
             return data
@@ -471,7 +478,7 @@ class ScheduleController:
             data = self.scsd_schedule(uid, request_week)
             return data
         elif college == '四川大学':
-            data = self.scdx_schedule(uid, request_week)
+            data = self.scdx_schedule(uid, request_week, request_term)
             return data
         else:
             info = {

@@ -26,8 +26,12 @@ class RefreshController:
             form = request.get_json()
             form['username'] = User.query.filter_by(id=form['uid']).first().username
             form['password'] = User.query.filter_by(id=form['uid']).first().password
-            session = xnjd.active_cookies(form)
-
+            i = 1
+            while i < 4:
+                session = xnjd.active_cookies(form)
+                i += 1
+                if xnjd.login_test(session):
+                    break
             if xnjd.login_test(session):
                 spider = XnjdSpider(session)
                 spider.save_schedule(form['uid'])
@@ -62,7 +66,12 @@ class RefreshController:
             form = request.get_json()
             form['username'] = User.query.filter_by(id=form['uid']).first().username
             form['password'] = User.query.filter_by(id=form['uid']).first().password
-            session = scsd.active_cookies(form)
+            i = 1
+            while i < 4:
+                session = scsd.active_cookies(form)
+                i += 1
+                if scsd.is_login:
+                    break
             if scsd.is_login:
                 spider = ScsdSpider(session, scsd.domain, form['username'])
                 spider.save_schedule(form['uid'])
@@ -97,12 +106,18 @@ class RefreshController:
             form = request.get_json()
             form['username'] = User.query.filter_by(id=form['uid']).first().username
             form['password'] = User.query.filter_by(id=form['uid']).first().password
-            session = scdx.active_cookies(form)
+            i = 1
+            while i < 4:
+                session = scdx.active_cookies(form)
+                i += 1
+                if scdx.is_login:
+                    break
 
             if scdx.is_login:
                 spider = ScdxSpider(session, form['username'])
                 spider.save_schedule(form['uid'])
                 status = spider.save_score(form['uid'])
+                spider.save_next_term_schedule(form['uid'])
                 spider.save_total_score(form['uid'])
                 data = {
                     'status': 200,

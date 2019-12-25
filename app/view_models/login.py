@@ -20,8 +20,10 @@ class LoginController:
                 # 先调用schedule，确保xh与name不会为空
                 spider.save_schedule(uid)
                 spider.save_score(uid)
-                if isinstance(spider, ScsdSpider or ScdxSpider):
+                if isinstance(spider, ScsdSpider) or isinstance(spider, ScdxSpider):
                     spider.save_total_score(uid)
+                if isinstance(spider, ScdxSpider):
+                    spider.save_next_term_schedule(uid)
                 # 保存用户姓名及学校
                 user.save_name(form['username'], spider.name, spider.college)
                 log(uid, "*****存储数据完毕")
@@ -141,7 +143,12 @@ class LoginController:
 
         if method == "POST":
             form = request.get_json()
-            session = scdx.active_cookies(form)
+            i = 1
+            while i < 4:
+                session = scdx.active_cookies(form)
+                i += 1
+                if scdx.is_login:
+                    break
 
             # 进行是否登入教务系统判断
             if scdx.is_login:

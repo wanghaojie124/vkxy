@@ -1,7 +1,10 @@
 import base64
 import datetime
+import random
 import time
-from decimal import Decimal
+from qiniu import Auth, put_file, etag
+import math
+from app.config import QINIU_AK, QINIU_SK
 
 
 def log(*args, **kwargs):
@@ -44,6 +47,7 @@ def black_list(obj, list):
     return res
 
 
+# 根据日期获得自定义星期简称
 def get_week_day(date):
     week_day_dict = {
         0: 'Mon',
@@ -57,10 +61,81 @@ def get_week_day(date):
     day = date.weekday()
     return week_day_dict[day]
 
+# print((datetime.datetime.now() - datetime.timedelta(days= 4)).strftime('%a')).
 
-# print((datetime.datetime.now() - datetime.timedelta(days= 4)).strftime('%a'))
-def default(obj):
-    if isinstance(obj, Decimal):
-        return str(obj)
-    raise TypeError("Object of type '%s' is not JSON serializable" % type(obj).__name__)
+
+# 根据起止周日期和指定日期获得当前周数,
+def get_current_week(start_date, search_date):
+    try:
+        start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d')
+        search_date = datetime.datetime.strptime(search_date, '%Y-%m-%d')
+        week = (int(search_date.strftime('%j')) - int(start_date.strftime('%j'))) / 7
+        week = math.ceil(week)
+        return week
+    except Exception as ex:
+        pass
+
+
+# 根据当前日期、起止周日期和指定周，获取当前日期距指定周周数
+def get_need_week(start_date, request_week):
+    start_date1 = datetime.datetime.strptime(start_date, '%Y-%m-%d')
+    year = start_date1.year
+
+    fir_day = datetime.datetime(year, 1, 1)
+    search_date = 7 * int(request_week) + int(start_date1.strftime('%j')) - 7
+    zone = datetime.timedelta(days=search_date)
+    search_date = datetime.datetime.strftime(fir_day + zone, '%Y-%m-%d')
+
+    current_date = datetime.datetime.now()
+    search_date = datetime.datetime.strptime(search_date, '%Y-%m-%d')
+    days = (current_date-search_date).days
+    return math.ceil(days/7)
+
+
+# 返回一个随机的请求头 headers
+def getuser_agent():
+    user_agent_list = [ \
+        "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/537.1 (KHTML, like Gecko) Chrome/22.0.1207.1 Safari/537.1" \
+        "Mozilla/5.0 (X11; CrOS i686 2268.111.0) AppleWebKit/536.11 (KHTML, like Gecko) Chrome/20.0.1132.57 Safari/536.11", \
+        "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/536.6 (KHTML, like Gecko) Chrome/20.0.1092.0 Safari/536.6", \
+        "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/536.6 (KHTML, like Gecko) Chrome/20.0.1090.0 Safari/536.6", \
+        "Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/537.1 (KHTML, like Gecko) Chrome/19.77.34.5 Safari/537.1", \
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/536.5 (KHTML, like Gecko) Chrome/19.0.1084.9 Safari/536.5", \
+        "Mozilla/5.0 (Windows NT 6.0) AppleWebKit/536.5 (KHTML, like Gecko) Chrome/19.0.1084.36 Safari/536.5", \
+        "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1063.0 Safari/536.3", \
+        "Mozilla/5.0 (Windows NT 5.1) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1063.0 Safari/536.3", \
+        "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_8_0) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1063.0 Safari/536.3", \
+        "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1062.0 Safari/536.3", \
+        "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1062.0 Safari/536.3", \
+        "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1061.1 Safari/536.3", \
+        "Mozilla/5.0 (Windows NT 6.1; WOW64) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1061.1 Safari/536.3", \
+        "Mozilla/5.0 (Windows NT 6.1) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1061.1 Safari/536.3", \
+        "Mozilla/5.0 (Windows NT 6.2) AppleWebKit/536.3 (KHTML, like Gecko) Chrome/19.0.1061.0 Safari/536.3", \
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/535.24 (KHTML, like Gecko) Chrome/19.0.1055.1 Safari/535.24", \
+        "Mozilla/5.0 (Windows NT 6.2; WOW64) AppleWebKit/535.24 (KHTML, like Gecko) Chrome/19.0.1055.1 Safari/535.24"
+    ]
+    UserAgent = random.choice(user_agent_list)
+    return UserAgent
+
+
+def upload_qiniu(path, file_name):
+    # 需要填写你的 Access Key 和 Secret Key
+    access_key = QINIU_AK
+    secret_key = QINIU_SK
+    # 构建鉴权对象
+    q = Auth(access_key, secret_key)
+    # 要上传的空间
+    bucket_name = 'vkcampus'
+    # 上传后保存的文件名
+    key = 'images/' + file_name
+    # 生成上传 Token，可以指定过期时间等
+    token = q.upload_token(bucket_name, key, 3600)
+    # 要上传文件的本地路径
+    localfile = path + file_name
+    ret, info = put_file(token, key, localfile)
+    assert ret['key'] == key
+    assert ret['hash'] == etag(localfile)
+
+
+
 

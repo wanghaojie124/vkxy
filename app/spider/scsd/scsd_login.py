@@ -4,6 +4,7 @@ import json
 
 from bs4 import BeautifulSoup
 
+from app.config import CAPTCHA_DISCERN_URL
 from app.spider.spiderbase import SpiderBase
 from utils import log, getuser_agent
 
@@ -54,10 +55,17 @@ class ScsdLogin(SpiderBase):
 
     def active_cookies(self, form):
         session = self.make_session()
-        captcha_code = form["code"]
+        image_base64, cookies_str = self.get_captcha_and_cookie()
+        data = {
+            "image": image_base64,
+        }
+        r = requests.post(url=CAPTCHA_DISCERN_URL, json=data)
+        data = r.json()
+        captcha_code = data["message"] if data["code"] == 0 else ''
+        # captcha_code = form["code"]
         username = form["username"]
         password = form["password"]
-        cookies_str = form["cookies_str"]
+        # cookies_str = form["cookies_str"]
         cookies = json.loads(cookies_str)
         for k, v in cookies.items():
             session.cookies.set(name=k, value=v)
@@ -72,7 +80,7 @@ class ScsdLogin(SpiderBase):
             self.post_url += location
             self.domain += location.split('/', )[1]
         except Exception as e:
-            print('****获取师大uri失败', e)
+            log('****获取师大uri失败', e)
         data = {
             "tbUserName": username,
             "tbPassWord": password,

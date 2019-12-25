@@ -2,6 +2,7 @@ import json
 
 from pyquery import PyQuery as pq
 from app.models.base import db
+from app.models.scdx_next_term_schedule import ScdxNextTermSchedule
 from app.models.scdx_schedule import ScdxSchedule
 from app.models.user_score import UserScore
 from app.models.user_total_score import UserTotalScore
@@ -20,7 +21,8 @@ class ScdxSpider(SpiderBase):
         self.session = session
         # self.score_url = 'http://zhjw.scu.edu.cn/student/integratedQuery/scoreQuery/allTermScores/index'
         self.schedule_url = "http://zhjw.scu.edu.cn/student/courseSelect/thisSemesterCurriculum/ajaxStudentSchedule/callback"
-        self.score_data_url = "http://202.115.47.141/student/integratedQuery/scoreQuery/allTermScores/data"
+        self.next_schedule_url = "http://zhjw.scu.edu.cn/student/courseSelect/thisSemesterCurriculum/ajaxStudentSchedule/callback"
+        self.score_data_url = "http://zhjw.scu.edu.cn/student/integratedQuery/scoreQuery/allTermScores/data"
         self.index = "http://zhjw.scu.edu.cn/"
         self.jidian_api = "http://zhjw.scu.edu.cn/main/academicInfo"
         self.total_jidian = ''
@@ -35,8 +37,8 @@ class ScdxSpider(SpiderBase):
 
         }
         r = self.session.post(self.score_data_url, data)
-        scores = json.loads(r.text)
         try:
+            scores = json.loads(r.text)
             score_list = scores['list']['records']
             for i in score_list:
                 xueqi = i[0]
@@ -63,6 +65,7 @@ class ScdxSpider(SpiderBase):
             log(e, '*****未获取到考试成绩，可能本学期未进行过考试或未进行课程评价')
             return False
 
+    # 本学期课表
     def get_schedule(self):
         r = self.session.get(self.index)
         page = pq(r.content)
@@ -166,3 +169,64 @@ class ScdxSpider(SpiderBase):
             with db.auto_commit():
                 total_score.setattr(data)
                 db.session.add(total_score)
+
+    # 下学期课表
+    def get_next_term_schedule(self):
+        r = self.session.get(self.index)
+        page = pq(r.content)
+        name = page('span.user-info')
+        name = pq(name).text()
+        self.name = name.split('，')[-1].replace(' ', '')
+
+        data = {
+            "planCode": "2019-2020-2-1"
+        }
+        res = self.session.post(self.next_schedule_url, data)
+        try:
+            schedule_infos = json.loads(res.text)['xkxx']
+            for infos in schedule_infos:
+                s = list(infos.values())
+                for info in s:
+                    schedule_infos = info['timeAndPlaceList']
+                    course_teacher = info['attendClassTeacher']
+                    for schedule_info in schedule_infos:
+                        course_name = schedule_info['coureName']
+                        class_day = schedule_info['classDay']
+                        class_sessions = schedule_info['classSessions']
+                        continuing = schedule_info['continuingSession']
+                        course_weeks = schedule_info['weekDescription']
+                        course_address = schedule_info['campusName'] + \
+                                         schedule_info['teachingBuildingName'] + \
+                                         schedule_info['classroomName']
+                        schedules = {
+                            'xh': self.xh,
+                            'name': self.name,
+                            'course_teacher': course_teacher,
+                            'course_name': course_name,
+                            'class_day': class_day,
+                            'class_sessions': class_sessions,
+                            'continuing': continuing,
+                            'course_weeks': course_weeks,
+                            'course_address': course_address
+                        }
+                        self.schedule.append(schedules)
+        except Exception as e:
+            log(e, "*****获取课表信息失败")
+
+    def save_next_term_schedule(self, uid):
+        self.get_next_term_schedule()
+        for i in self.schedule:
+            user_schedule = ScdxNextTermSchedule()
+            schedule_dict = i
+            schedule_dict['uid'] = uid
+            user_schedule.setattr(schedule_dict)
+            update_schedule = ScdxNextTermSchedule.query.filter_by(class_day=schedule_dict['class_day'],
+                                                                   course_name=schedule_dict['course_name'],
+                                                                   class_sessions=schedule_dict['class_sessions'],
+                                                                   uid=uid).first()
+            if update_schedule:
+                with db.auto_commit():
+                    update_schedule.setattr(schedule_dict)
+            else:
+                with db.auto_commit():
+                    db.session.add(user_schedule)

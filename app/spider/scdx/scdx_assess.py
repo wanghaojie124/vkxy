@@ -16,28 +16,39 @@ class ScdxAssess(SpiderBase):
     # 提交打分rul
     assess_url = "http://202.115.47.141/student/teachingEvaluation/teachingEvaluation/evaluation"
     assess_list = []
+    course = []
 
     def get_data(self, data, session):
         r = session.post(self.assess_page, data)
         soup = BeautifulSoup(r.content, 'lxml')
-        token_value = soup.find('input', id='tokenValue').get('value')
-        assess_data = {
-            'tokenValue': token_value,
-            'questionnaireCode': data['questionnaireCode'],
-            'evaluationContentNumber': data['evaluationContentNumber'],
-            'evaluatedPeopleNumber': data['evaluatedPeopleNumber'],
-            'count': '0',
-            'zgpj': '暂无建议'
-        }
-        answer_id = soup.find_all('input', class_='ace')
-        answer_id_list = []
-        for i in answer_id:
-            answer_id = i.get('name')
-            answer_id_list.append(answer_id)
-        answer_id_list = set(answer_id_list)
-        for i in answer_id_list:
-            assess_data[i] = '10_1'
-        return assess_data
+        try:
+            token_value = soup.find('input', id='tokenValue').get('value')
+            assess_data = {
+                'tokenValue': token_value,
+                'questionnaireCode': data['questionnaireCode'],
+                'evaluationContentNumber': data['evaluationContentNumber'],
+                'evaluatedPeopleNumber': data['evaluatedPeopleNumber'],
+                'count': '0',
+                'zgpj': '暂无建议'
+            }
+            answer_id = soup.find_all('input', class_='ace')
+            answer_id_list = []
+            for i in answer_id:
+                answer_id = i.get('name')
+                answer_id_list.append(answer_id)
+            answer_id_list = set(answer_id_list)
+            for i in answer_id_list:
+                assess_data[i] = '10_1'
+            return assess_data
+        except Exception as e:
+            log(e)
+
+    def get_course_list(self, session):
+        r = session.get(url=self.get_assess_list_url)
+        infos = json.loads(r.text)['data']
+        for i in infos:
+            if i['isEvaluated'] == '否':
+                self.course.append(i['evaluationContent'])
 
     def get_assess_list(self, session):
         r = session.get(url=self.get_assess_list_url)
@@ -66,7 +77,10 @@ class ScdxAssess(SpiderBase):
 
     def assess_async(self, app, uid, session):
         with app.app_context():
-            self.get_assess_list(session)
+            if len(self.assess_list) == 0:
+                self.get_assess_list(session)
+            else:
+                pass
             total = len(self.assess_list)
             i = 0
             while len(self.assess_list) > 0:
@@ -90,3 +104,4 @@ class ScdxAssess(SpiderBase):
 
     def main(self, uid, session):
         self.assess(uid, session)
+        self.get_course_list(session)

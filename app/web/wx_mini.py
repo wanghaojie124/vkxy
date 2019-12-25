@@ -64,8 +64,9 @@ def get_schedule():
     uid = request.get_json().get('uid', '')
     college = request.get_json().get('college', '')
     request_week = request.get_json().get('request_week', '')
+    request_term = request.get_json().get('request_term', '')
     controller = ScheduleController()
-    resp = controller.main(college, uid, request_week)
+    resp = controller.main(college, uid, request_week, request_term)
     return jsonify(resp)
 
 
@@ -79,6 +80,7 @@ def get_user_info():
     return jsonify(resp)
 
 
+# 刷新成绩/课表
 @web.route("/refresh", methods=["GET", "POST"])
 def refresh():
     controller = RefreshController()
@@ -93,6 +95,7 @@ def refresh():
         return jsonify(data)
 
 
+# 获取资讯链接
 @web.route("/articlelist", methods=["GET"])
 def get_articles_info():
     # 分页查找数据返回
@@ -105,6 +108,7 @@ def get_articles_info():
     return jsonify(resp)
 
 
+# 获取轮播图链接
 @web.route("/bannerlist", methods=["GET"])
 def get_image_info():
     college = request.args.get('college', '')
@@ -198,3 +202,11 @@ def make_assess():
         college = request.get_json().get('college', '')
         data = controller.main(college, request.method)
         return jsonify(data)
+
+
+# 绩点计算器
+@web.route("/counter", methods=["POST"])
+def score_counter():
+    req = request.get_json()
+    drop_elective_course = req['drop_elective_course'] if req['drop_elective_course'] else ''
+    drop_limited_course = req['drop_limited_course'] if req['drop_limited_course'] else ''

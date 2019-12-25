@@ -28,3 +28,5 @@ def get_scdx_calendar():
 
 SCDX_BEGIN_DATE = "2019-09-01"
 SCDX_TOTAL_WEEKS = 20
+
+SCDX_TERM2 = "2020-02-23"

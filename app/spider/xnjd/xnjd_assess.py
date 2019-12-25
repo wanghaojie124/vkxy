@@ -15,6 +15,7 @@ class XnjdAssess(SpiderBase):
     # 完成查看成绩url GET方法
     finish_url = 'http://jwc.swjtu.edu.cn/vatuu/StudentScoreInfoAction?setAction=studentScoreQuery&viewType=studentScore&orderType=submitDate&orderValue=desc'
     assess_url_list = []
+    course = []
     domain = "http://jwc.swjtu.edu.cn"
 
     def get_data(self, url, session):
@@ -75,6 +76,17 @@ class XnjdAssess(SpiderBase):
 
         return data
 
+    def get_course_list(self, session):
+        r = session.get(url=self.assess_list_url)
+        soup = BeautifulSoup(r.content, 'lxml')
+        tr = soup.find('table', id='table3').find_all('tr')
+        for j in tr[1:]:
+            td = j.find_all('td')
+            course = td[-4].get_text().strip()
+            link = td[-1].find('a')
+            if link:
+                self.course.append(course)
+
     def get_assess_list(self, session):
         r = session.get(url=self.assess_list_url)
         soup = BeautifulSoup(r.content, 'lxml')
@@ -118,4 +130,5 @@ class XnjdAssess(SpiderBase):
 
     def main(self, uid, session):
         self.assess(uid, session)
+        self.get_course_list(session)
 
