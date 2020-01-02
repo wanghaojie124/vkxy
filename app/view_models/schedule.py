@@ -1,11 +1,11 @@
 from datetime import datetime
-
 from app.models.scdx_next_term_schedule import ScdxNextTermSchedule
+from app.models.xnjd_next_term_schedule import XnjdNextTermSchedule
 from app.spider.scdx.scdx_calendar import SCDX_BEGIN_DATE, SCDX_TOTAL_WEEKS, SCDX_TERM2
 from app.models.scdx_schedule import ScdxSchedule
 from app.models.user_schedule import UserSchedule
 from app.spider.scsd.scsd_calendar import get_scsd_calendar
-from app.spider.xnjd.xnjd_calendar import get_xnjd_calendar
+from app.spider.xnjd.xnjd_calendar import XnjdCalendar
 from utils import log, black_list, white_list, get_week_day, get_current_week, get_need_week
 import re
 
@@ -13,6 +13,7 @@ import re
 class ScheduleController:
 
     def get_xnjd_course_info(self, res):
+        print(res)
         for k, v in res.items():
             if isinstance(v, list):
                 week_str = v[1]
@@ -44,6 +45,56 @@ class ScheduleController:
                     v.append(s)
                 res[k] = v
         return res
+
+    def get_xnjd_next_term_course_info(self, ex):
+        jie1 = int(ex['course_continue'].split('-')[0])
+        jie2 = int(ex['course_continue'].split('-')[1]) + 1
+        new_ex_list = []
+        for jie in range(jie1, jie2):
+            new_ex = {
+                'jie': '',
+            }
+            week_day = ex['class_day']
+            course_name = ex['course_name']
+            course_weeks = ex['course_weeks']
+            course_address = ex['course_address']
+            course_teacher = ex['course_teacher']
+            course = [course_name, course_weeks, course_address, course_teacher]
+            new_ex['jie'] = str(jie)
+            new_ex[week_day] = course
+            new_ex_list.append(new_ex)
+        for ex in new_ex_list:
+            for k, v in ex.items():
+                if isinstance(v, list):
+                    week_str = v[1]
+                    if '单' in week_str:
+                        s = re.findall(r'\d+', week_str)
+                        weeks = range(int(s[0]), int(s[1]) + 1)
+                        week_list = []
+                        for i in weeks:
+                            if (i % 2) != 0:
+                                week_list.append(str(i))
+                        v.append(week_list)
+                    elif '双' in week_str:
+                        s = re.findall(r'\d+', week_str)
+                        weeks = range(int(s[0]), int(s[1]) + 1)
+                        week_list = []
+                        for i in weeks:
+                            if (i % 2) == 0:
+                                week_list.append(str(i))
+                        v.append(week_list)
+                    elif '-' in week_str:
+                        s = re.findall(r'\d+', week_str)
+                        weeks = range(int(s[0]), int(s[1]) + 1)
+                        week_list = []
+                        for i in weeks:
+                            week_list.append(str(i))
+                        v.append(week_list)
+                    elif ',' in week_str or '，' in week_str:
+                        s = re.findall(r'\d+', week_str)
+                        v.append(s)
+                    ex[k] = v
+        return new_ex_list
 
     def get_scsd_course_info(self, ex):
         for k, v in ex.items():
@@ -296,44 +347,83 @@ class ScheduleController:
 
         return res
 
-    def xnjd_schedule(self, uid, request_week):
-        res_list = UserSchedule.query.filter_by(uid=uid).all()
+    def xnjd_schedule(self, uid, request_week, request_term):
+        calendar = XnjdCalendar()
+        xnjd_begin_date, total_weeks = calendar.get_xnjd_calendar()
         result = []
-        xnjd_begin_date, total_weeks = get_xnjd_calendar()
-        current_week = get_current_week(xnjd_begin_date, datetime.now().strftime('%Y-%m-%d'))
-        for res in res_list:
-            res_dict = res.to_dict()
-            exce = ['id', 'uid', 'status']
-            res_dict = black_list(res_dict, exce)
-            # 课程名称处理，拆开为课程名称，上课周数，上课地点，老师
-            for k, v in res_dict.items():
-                if isinstance(v, str) and '\xa0' in v:
-                    v = v.split('\xa0')[1:]
-                    try:
-                        v2 = v[1]
-                        v0 = v[0].split('）', 1)[0] + '）'
-                        v1 = v[0].split('）', 1)[1]
-                        v3 = '（' + v0.split('（', 1)[1]
-                        v0 = v0.split('（', 1)[0]
-                        v = [v0, v1, v2, v3]
-                        res_dict[k] = v
-                    except Exception as e:
-                        log('*****在处理课程名称时发生了错误', e)
+        if request_term == 'next':
+            res_list = XnjdNextTermSchedule.query.filter_by(uid=uid).all()
+            date = calendar.term2
+            current_week = get_need_week(date, request_week)
+            for i in range(1, 14):
+                data = {
+                    'jie': '',
+                    'Mon': '',
+                    'Tues': '',
+                    'Wed': '',
+                    'Thur': '',
+                    'Fri': '',
+                    'Sat': '',
+                    'Sun': '',
+                    'current_week': current_week,
+                    'total_weeks': total_weeks
+                }
+                data['jie'] = str(i)
+                result.append(data)
+            for res in res_list:
+                res_dict = res.to_dict()
+                exce = ['id', 'uid', 'status', 'create_at']
+                res_dict = black_list(res_dict, exce)
+                res_dict_list = self.get_xnjd_next_term_course_info(res_dict)
+                for res_dict in res_dict_list:
+                    if request_week:
+                        res_dict = self.get_request_schedule(res_dict, request_week)
                     else:
-                        res_dict[k] = v
-            res_dict = self.get_xnjd_course_info(res_dict)
-            if request_week:
-                res_dict = self.get_request_schedule(res_dict, request_week)
-            else:
-                res_dict = self.get_request_schedule(res_dict, current_week)
-            res_dict['current_week'] = current_week
-            res_dict['total_weeks'] = total_weeks
-            result.append(res_dict)
+                        res_dict = self.get_request_schedule(res_dict, current_week)
+                    for i in result:
+                        if i['jie'] == res_dict['jie']:
+                            for k, v in res_dict.items():
+                                if v:
+                                    i[k] = v
+            return result
+        else:
+            res_list = UserSchedule.query.filter_by(uid=uid).all()
+            date = xnjd_begin_date
+            current_week = get_current_week(date, datetime.now().strftime('%Y-%m-%d'))
+            for res in res_list:
+                res_dict = res.to_dict()
+                exce = ['id', 'uid', 'status']
+                res_dict = black_list(res_dict, exce)
+                # 课程名称处理，拆开为课程名称，上课周数，上课地点，老师
+                for k, v in res_dict.items():
+                    if isinstance(v, str) and '\xa0' in v:
+                        v = v.split('\xa0')[1:]
+                        try:
+                            v2 = v[1]
+                            v0 = v[0].split('）', 1)[0] + '）'
+                            v1 = v[0].split('）', 1)[1]
+                            v3 = '（' + v0.split('（', 1)[1]
+                            v0 = v0.split('（', 1)[0]
+                            v = [v0, v1, v2, v3]
+                            res_dict[k] = v
+                        except Exception as e:
+                            log('*****在处理课程名称时发生了错误', e)
+                        else:
+                            res_dict[k] = v
+                res_dict = self.get_xnjd_course_info(res_dict)
+                if request_week:
+                    res_dict = self.get_request_schedule(res_dict, request_week)
+                else:
+                    res_dict = self.get_request_schedule(res_dict, current_week)
+                res_dict['current_week'] = current_week
+                res_dict['total_weeks'] = total_weeks
+                result.append(res_dict)
         return result
 
     def xnjd_today_schedule(self, uid):
         res_list = UserSchedule.query.filter_by(uid=uid).all()
-        xnjd_begin_date, total_weeks = get_xnjd_calendar()
+        calendar = XnjdCalendar()
+        xnjd_begin_date, total_weeks = calendar.get_xnjd_calendar()
         result = []
         for res in res_list:
             res_dict = res.to_dict()
@@ -415,7 +505,9 @@ class ScheduleController:
                 'Thur': '',
                 'Fri': '',
                 'Sat': '',
-                'Sun': ''
+                'Sun': '',
+                'current_week': current_week,
+                'total_weeks': SCDX_TOTAL_WEEKS
             }
             data['jie'] = str(i)
             result.append(data)
@@ -431,8 +523,6 @@ class ScheduleController:
                     res_dict = self.get_request_schedule(res_dict, current_week)
                 for i in result:
                     if i['jie'] == res_dict['jie']:
-                        i['current_week'] = current_week
-                        i['total_weeks'] = SCDX_TOTAL_WEEKS
                         for k, v in res_dict.items():
                             if v:
                                 i[k] = v
@@ -472,7 +562,7 @@ class ScheduleController:
 
     def main(self, college, uid, request_week, request_term):
         if college == '西南交通大学':
-            data = self.xnjd_schedule(uid, request_week)
+            data = self.xnjd_schedule(uid, request_week, request_term)
             return data
         elif college == '四川师范大学':
             data = self.scsd_schedule(uid, request_week)

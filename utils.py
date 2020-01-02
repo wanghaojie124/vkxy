@@ -67,9 +67,12 @@ def get_week_day(date):
 # 根据起止周日期和指定日期获得当前周数,
 def get_current_week(start_date, search_date):
     try:
-        start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d')
-        search_date = datetime.datetime.strptime(search_date, '%Y-%m-%d')
-        week = (int(search_date.strftime('%j')) - int(start_date.strftime('%j'))) / 7
+        start_date = time.strptime(start_date, '%Y-%m-%d')
+        search_date = time.strptime(search_date, '%Y-%m-%d')
+        start_date_timestamp = int(time.mktime(start_date))
+        search_date_timestamp = int(time.mktime(search_date))
+        week = search_date_timestamp-start_date_timestamp
+        week = week / 3600 / 24 / 7
         week = math.ceil(week)
         return week
     except Exception as ex:

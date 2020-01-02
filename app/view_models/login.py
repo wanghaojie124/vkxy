@@ -22,7 +22,7 @@ class LoginController:
                 spider.save_score(uid)
                 if isinstance(spider, ScsdSpider) or isinstance(spider, ScdxSpider):
                     spider.save_total_score(uid)
-                if isinstance(spider, ScdxSpider):
+                if isinstance(spider, ScdxSpider) or isinstance(spider, XnjdSpider):
                     spider.save_next_term_schedule(uid)
                 # 保存用户姓名及学校
                 user.save_name(form['username'], spider.name, spider.college)

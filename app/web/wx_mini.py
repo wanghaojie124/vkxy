@@ -3,6 +3,7 @@ from flask import request, jsonify, render_template
 from app.config import IMAGE_DOMAIN
 from app.models.user_score import UserScore
 from app.models.user_total_score import UserTotalScore
+from app.view_models.counter import Counter
 from app.web import web
 from app.view_models.refresh import RefreshController
 from app.view_models.login import LoginController
@@ -208,5 +209,8 @@ def make_assess():
 @web.route("/counter", methods=["POST"])
 def score_counter():
     req = request.get_json()
-    drop_elective_course = req['drop_elective_course'] if req['drop_elective_course'] else ''
-    drop_limited_course = req['drop_limited_course'] if req['drop_limited_course'] else ''
+    college = req['college'] if req['college'] else ''
+    counter = Counter()
+    data = counter.main(college, req)
+    return jsonify(data)
+

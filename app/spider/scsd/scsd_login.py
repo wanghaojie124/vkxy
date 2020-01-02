@@ -62,6 +62,7 @@ class ScsdLogin(SpiderBase):
         r = requests.post(url=CAPTCHA_DISCERN_URL, json=data)
         data = r.json()
         captcha_code = data["message"] if data["code"] == 0 else ''
+
         # captcha_code = form["code"]
         username = form["username"]
         password = form["password"]

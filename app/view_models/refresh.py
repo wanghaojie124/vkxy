@@ -36,6 +36,7 @@ class RefreshController:
                 spider = XnjdSpider(session)
                 spider.save_schedule(form['uid'])
                 status = spider.save_score(form['uid'])
+                spider.save_next_term_schedule(form['uid'])
                 data = {
                     'status': 200,
                     'msg': '已更新数据'

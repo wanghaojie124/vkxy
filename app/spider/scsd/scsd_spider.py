@@ -171,6 +171,10 @@ class ScsdSpider(SpiderBase):
         self.get_schedule()
         if not self.xh:
             self.get_score()
+        schedule = UserSchedule.query.filter_by(uid=uid).all()
+        for i in schedule:
+            with db.auto_commit():
+                db.session.delete(i)
         for i in self.schedule:
             user_schedule = UserSchedule()
             schedule_dict = i

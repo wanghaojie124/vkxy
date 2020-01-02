@@ -8,4 +8,4 @@ QINIU_AK = "P1LTdUhRCAxLEJMX2PdXc_gW3YkQ3N7_J7pLdjer"
 
 QINIU_SK = "VuP-xY-H5tdZaCAselF4exM5U8rZII3Tju_rKsWC"
 
-CAPTCHA_DISCERN_URL = "http://47.98.164.173:8081/captcha/v1"
+CAPTCHA_DISCERN_URL = "http://localhost:8091/captcha/v1"

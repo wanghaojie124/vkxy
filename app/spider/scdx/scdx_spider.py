@@ -17,6 +17,7 @@ class ScdxSpider(SpiderBase):
         self.name = ''
         self.score = []
         self.schedule = []
+        self.next_schedule = []
         self.college = '四川大学'
         self.session = session
         # self.score_url = 'http://zhjw.scu.edu.cn/student/integratedQuery/scoreQuery/allTermScores/index'
@@ -127,6 +128,10 @@ class ScdxSpider(SpiderBase):
 
     def save_schedule(self, uid):
         self.get_schedule()
+        schedule = ScdxSchedule.query.filter_by(uid=uid).all()
+        for i in schedule:
+            with db.auto_commit():
+                db.session.delete(i)
         for i in self.schedule:
             user_schedule = ScdxSchedule()
             schedule_dict = i
@@ -209,13 +214,17 @@ class ScdxSpider(SpiderBase):
                             'course_weeks': course_weeks,
                             'course_address': course_address
                         }
-                        self.schedule.append(schedules)
+                        self.next_schedule.append(schedules)
         except Exception as e:
             log(e, "*****获取课表信息失败")
 
     def save_next_term_schedule(self, uid):
         self.get_next_term_schedule()
-        for i in self.schedule:
+        schedule = ScdxNextTermSchedule.query.filter_by(uid=uid).all()
+        for i in schedule:
+            with db.auto_commit():
+                db.session.delete(i)
+        for i in self.next_schedule:
             user_schedule = ScdxNextTermSchedule()
             schedule_dict = i
             schedule_dict['uid'] = uid
