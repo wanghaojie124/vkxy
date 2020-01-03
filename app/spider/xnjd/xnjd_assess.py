@@ -4,6 +4,7 @@ from bs4 import BeautifulSoup
 from flask import current_app
 
 from app.spider.spiderbase import SpiderBase
+from app.spider.xnjd.Xnjd_spider import XnjdSpider
 from utils import log
 
 
@@ -120,6 +121,9 @@ class XnjdAssess(SpiderBase):
                         log('******已进行', i, '总共', total, '剩余', len(self.assess_url_list))
                     except Exception as e:
                         log(uid, '*****异步评课', e, '准备进行下次评课*****')
+            xnjd = XnjdSpider(session)
+            xnjd.save_next_term_schedule(uid)
+            xnjd.save_score(uid)
 
     # 异步存储数据入口函数
     def assess(self, uid, session):

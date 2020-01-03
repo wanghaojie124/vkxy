@@ -4,6 +4,7 @@ from threading import Thread
 from bs4 import BeautifulSoup
 from flask import current_app
 
+from app.spider.scdx.scdx_spider import ScdxSpider
 from app.spider.spiderbase import SpiderBase
 from utils import log
 
@@ -94,6 +95,9 @@ class ScdxAssess(SpiderBase):
                         log('******已进行', i, '总共', total, '剩余', len(self.assess_list))
                     except Exception as e:
                         log(uid, '*****异步评课', e, '准备进行下次评课*****')
+            scdx = ScdxSpider(session)
+            scdx.save_score(uid)
+            scdx.save_next_term_schedule(uid)
 
     # 异步存储数据入口函数
     def assess(self, uid, session):
