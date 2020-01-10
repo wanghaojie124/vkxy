@@ -1,7 +1,7 @@
 # 获取西南交通大学校历
 import json
 import time
-import requests
+from app.spider.spiderbase import Session
 from utils import getuser_agent
 
 
@@ -11,7 +11,6 @@ class XnjdCalendar:
         time_array = time.strptime(date, format_string)
         time_stamp = int(time.mktime(time_array))
         return time_stamp
-
 
     def get_xnjd_calendar(self):
         headers = {
@@ -24,7 +23,8 @@ class XnjdCalendar:
         data = {
             'date': 'new Date()'
         }
-        r = requests.post(url, headers, data)
+        session = Session()
+        r = session.post(url, headers, data)
         date = json.loads(r.text)
         date = date['dateJson']
         xnjd_begin_date1 = ''

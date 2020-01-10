@@ -4,7 +4,7 @@ from bs4 import BeautifulSoup
 from flask import current_app
 
 from app.spider.spiderbase import SpiderBase
-from app.spider.xnjd.Xnjd_spider import XnjdSpider
+from app.spider.xnjd.xnjd_spider import XnjdSpider
 from utils import log
 
 

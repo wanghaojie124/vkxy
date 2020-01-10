@@ -1,6 +1,21 @@
 import random
 
 import requests
+from requests import Session as _Session
+
+from utils import log
+
+
+class Session(_Session):
+    def get(self, url, **kwargs):
+        if 'timeout' not in kwargs.keys():
+            kwargs['timeout'] = (5, 5)
+        return self.request('GET', url, **kwargs)
+
+    def post(self, url, data=None, json=None, **kwargs):
+        if 'timeout' not in kwargs.keys():
+            kwargs['timeout'] = (5, 5)
+        return self.request('POST', url, data=data, json=json, **kwargs)
 
 
 class SpiderBase:
@@ -26,4 +41,3 @@ class SpiderBase:
         proxyurl = "http://" + proxyusernm + ":" + proxypasswd + "@" + proxyaddr + ":" + "%d" % proxyport
         proxy = {"http": proxyurl, "https": proxyurl}
         return proxy
-

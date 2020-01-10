@@ -3,7 +3,7 @@ import base64
 import json
 
 from app.config import CAPTCHA_DISCERN_URL
-from app.spider.spiderbase import SpiderBase
+from app.spider.spiderbase import SpiderBase, Session
 from utils import log, getuser_agent
 
 
@@ -21,13 +21,13 @@ class XnjdLogin(SpiderBase):
         self.test_url = "http://jwc.swjtu.edu.cn/vatuu/UserFramework"
 
     def make_session(self):
-        session = requests.session()
+        session = Session()
         session.headers = self.headers
         # session.proxies = self.random_proxy
         return session
 
-    def get_captcha_and_cookie(self,):
-        r = requests.get(self.captcha_url, headers=self.headers)
+    def get_captcha_and_cookie(self, session):
+        r = session.get(self.captcha_url, headers=self.headers)
         # r = requests.get(self.captcha_url, headers=self.headers, proxies=self.random_proxy)
         # s = requests.get('http://httpbin.org/get', headers=self.headers, proxies=self.random_proxy)
         # print(s.content)
@@ -42,11 +42,11 @@ class XnjdLogin(SpiderBase):
     def active_cookies(self, form):
         session = self.make_session()
 
-        image_base64, cookies_str = self.get_captcha_and_cookie()
+        image_base64, cookies_str = self.get_captcha_and_cookie(session)
         data = {
             "image": image_base64,
         }
-        r = requests.post(url=CAPTCHA_DISCERN_URL, json=data)
+        r = session.post(url=CAPTCHA_DISCERN_URL, json=data)
         data = r.json()
         captcha_code = data["message"] if data["code"] == 0 else ''
 

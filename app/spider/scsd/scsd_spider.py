@@ -61,29 +61,32 @@ class ScsdSpider(SpiderBase):
             log(e, '*****未获取到考试成绩，可能本学期未进行过考试或未进行课程评价')
             return False
 
-    def get_total_score(self):
-        score_html = self.session.get(self.score_url)
-        soup = BeautifulSoup(score_html.content, 'lxml')
-        infos = soup.find('span', id='ctl00_ctl00_body_body_lblSubTitle').find_all('strong')
-        self.xh = infos[0].text
-        self.name = infos[1].text
-        info_html = self.session.get(self.total_score_url)
-        page = pq(info_html.content)
-        table = page('table.table4')
-        average_score = pq(table)('tr')[1][1]
-        average_score = pq(average_score).text()
-        average_jidian = pq(table)('tr')[1][2]
-        average_jidian = pq(average_jidian).text()
-        total_xuefen = pq(table)('tr')[6][1]
-        total_xuefen = pq(total_xuefen).text()
-        data = {
-            'xh': self.xh,
-            'name': self.name,
-            'average_score': average_score,
-            'average_jidian': average_jidian,
-            'total_xuefen': total_xuefen,
-        }
-        return data
+    def get_total_score(self, uid):
+        try:
+            score_html = self.session.get(self.score_url)
+            soup = BeautifulSoup(score_html.content, 'lxml')
+            infos = soup.find('span', id='ctl00_ctl00_body_body_lblSubTitle').find_all('strong')
+            self.xh = infos[0].text
+            self.name = infos[1].text
+            info_html = self.session.get(self.total_score_url)
+            page = pq(info_html.content)
+            table = page('table.table4')
+            average_score = pq(table)('tr')[1][1]
+            average_score = pq(average_score).text()
+            average_jidian = pq(table)('tr')[1][2]
+            average_jidian = pq(average_jidian).text()
+            total_xuefen = pq(table)('tr')[6][1]
+            total_xuefen = pq(total_xuefen).text()
+            data = {
+                'xh': self.xh,
+                'name': self.name,
+                'average_score': average_score,
+                'average_jidian': average_jidian,
+                'total_xuefen': total_xuefen,
+            }
+            return data
+        except IndexError as e:
+            log('***', '师大' + uid, '获取total_score错误', e)
 
     def get_schedule(self):
         schedule_html = self.session.get(self.schedule_url)
@@ -148,6 +151,7 @@ class ScsdSpider(SpiderBase):
 
     def save_score(self, uid):
         status = self.get_score()
+
         if status:
             for i in self.score:
                 user_score = UserScore()
@@ -191,7 +195,7 @@ class ScsdSpider(SpiderBase):
                     db.session.add(user_schedule)
 
     def save_total_score(self, uid):
-        data = self.get_total_score()
+        data = self.get_total_score(uid)
         data['uid'] = uid
         total_score = UserTotalScore()
         user_info = UserTotalScore.query.filter_by(uid=uid).first()

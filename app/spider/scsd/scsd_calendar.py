@@ -1,7 +1,8 @@
 import time
 
-import requests
 from pyquery import PyQuery as pq
+
+from app.spider.spiderbase import Session
 from utils import getuser_agent
 import re
 
@@ -19,8 +20,8 @@ def get_scsd_calendar():
         "Referer": "http://jwc.swjtu.edu.cn/service/login.html?returnUrl=return",
         "X-Requested-With": "XMLHttpRequest"
     }
-
-    r = requests.get(url, headers).content.decode()
+    session = Session()
+    r = session.get(url, headers=headers).content.decode()
     page = pq(r)
     # 第一学期解析
     res = page('td.style8')

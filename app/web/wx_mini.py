@@ -4,7 +4,7 @@ from app.config import IMAGE_DOMAIN
 from app.models.user_score import UserScore
 from app.models.user_total_score import UserTotalScore
 from app.view_models.counter import Counter
-from app.web import web
+from app.web import web, cache_with_param
 from app.view_models.refresh import RefreshController
 from app.view_models.login import LoginController
 from app.models.articles import Articles
@@ -35,6 +35,7 @@ def index():
 
 
 @web.route("/scores", methods=["POST"])
+# @cache.cached(timeout=60*30)
 def get_scores():
     # 返回json格式的个人成绩信息
     uid = request.get_json().get('uid', '')
@@ -60,6 +61,7 @@ def get_scores():
 
 
 @web.route("/schedule", methods=["POST"])
+# @cache.cached(timeout=60*30)
 def get_schedule():
     # 返回json格式的个人课表信息
     uid = request.get_json().get('uid', '')
@@ -98,8 +100,10 @@ def refresh():
 
 # 获取资讯链接
 @web.route("/articlelist", methods=["GET"])
+@cache_with_param(timeout=3600*12)
 def get_articles_info():
     # 分页查找数据返回
+
     page = int(request.args.get('page', 1))
     limit = int(request.args.get('limit', 20))
     college = request.args.get('college', '')
@@ -111,6 +115,7 @@ def get_articles_info():
 
 # 获取轮播图链接
 @web.route("/bannerlist", methods=["GET"])
+@cache_with_param(timeout=3600*12)
 def get_image_info():
     college = request.args.get('college', '')
     banners = Banner.query.filter_by(college=college, special=0).order_by(Banner.weight.desc()).all()
@@ -133,6 +138,7 @@ def get_image_info():
 
 # 公告栏
 @web.route("/top", methods=["GET"])
+@cache_with_param(timeout=3600*12)
 def get_top_news():
     college = request.args.get('college', '')
     if college:

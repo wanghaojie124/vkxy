@@ -24,7 +24,6 @@ class XnjdSpider(SpiderBase):
 
     def get_score(self):
         score_html = self.session.get(self.score_url)
-
         soup = BeautifulSoup(score_html.content, 'lxml')
         try:
             tr = soup.find('table', class_='table_border').find_all('tr')
@@ -56,9 +55,8 @@ class XnjdSpider(SpiderBase):
 
     def get_schedule(self):
         schedule_html = self.session.get(self.schedule_url)
-
         page = pq(schedule_html.content)
-        info = page('.instruction-div.clearfix div strong').text()
+        info = page('.form-span strong span').text()
         # res = info.split(' ')[0]
         res = info[:14]
         self.xh = res[:10]
@@ -71,13 +69,13 @@ class XnjdSpider(SpiderBase):
             for j in tr[1:]:
                 td = j.find_all('td')
                 jie = td[0].get_text().strip()
-                mon = td[1].get_text().strip()
-                tues = td[2].get_text().strip()
-                wed = td[3].get_text().strip()
-                thur = td[4].get_text().strip()
-                fri = td[5].get_text().strip()
-                sat = td[6].get_text().strip()
-                sun = td[7].get_text().strip()
+                mon = td[2].get_text().strip()
+                tues = td[3].get_text().strip()
+                wed = td[4].get_text().strip()
+                thur = td[5].get_text().strip()
+                fri = td[6].get_text().strip()
+                sat = td[7].get_text().strip()
+                sun = td[8].get_text().strip()
                 schedule = {
                     'xh': self.xh,
                     'name': self.name,

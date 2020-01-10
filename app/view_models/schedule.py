@@ -13,7 +13,6 @@ import re
 class ScheduleController:
 
     def get_xnjd_course_info(self, res):
-        print(res)
         for k, v in res.items():
             if isinstance(v, list):
                 week_str = v[1]

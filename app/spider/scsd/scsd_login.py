@@ -1,11 +1,11 @@
-import requests
+import datetime
 import base64
 import json
 
 from bs4 import BeautifulSoup
 
 from app.config import CAPTCHA_DISCERN_URL
-from app.spider.spiderbase import SpiderBase
+from app.spider.spiderbase import SpiderBase, Session
 from utils import log, getuser_agent
 
 
@@ -30,12 +30,12 @@ class ScsdLogin(SpiderBase):
         self.sid = ''
 
     def make_session(self):
-        session = requests.session()
+        session = Session()
         session.headers = self.headers
         return session
 
-    def get_captcha_and_cookie(self):
-        r = requests.get(self.captcha_url, headers=self.headers)
+    def get_captcha_and_cookie(self, session):
+        r = session.get(self.captcha_url, headers=self.headers)
         # s = requests.get(self.login_url, headers=self.headers)
         # soup = BeautifulSoup(s.text, "lxml")
         # self.__VIEWSTATEGENERATOR = soup.find('input', id='__VIEWSTATEGENERATOR', attrs={'value': True}).get('value', '')
@@ -55,28 +55,38 @@ class ScsdLogin(SpiderBase):
 
     def active_cookies(self, form):
         session = self.make_session()
-        image_base64, cookies_str = self.get_captcha_and_cookie()
-        data = {
-            "image": image_base64,
-        }
-        r = requests.post(url=CAPTCHA_DISCERN_URL, json=data)
-        data = r.json()
-        captcha_code = data["message"] if data["code"] == 0 else ''
+        today = datetime.date.today()
 
-        # captcha_code = form["code"]
-        username = form["username"]
-        password = form["password"]
-        # cookies_str = form["cookies_str"]
-        cookies = json.loads(cookies_str)
-        for k, v in cookies.items():
-            session.cookies.set(name=k, value=v)
-        session = self.post_data(session, username, password, captcha_code)
-        return session
+        d_time1 = datetime.datetime.strptime(str(today) + '22:10:00', '%Y-%m-%d%H:%M:%S')
+        d_time2 = datetime.datetime.strptime(str(today) + '23:59:59', '%Y-%m-%d%H:%M:%S')
+        d_time3 = datetime.datetime.strptime(str(today) + '00:00:00', '%Y-%m-%d%H:%M:%S')
+        d_time4 = datetime.datetime.strptime(str(today) + '07:30:00', '%Y-%m-%d%H:%M:%S')
+
+        if d_time1 < datetime.datetime.now() < d_time2 or d_time3 < datetime.datetime.now() < d_time4:
+            return False
+        else:
+            image_base64, cookies_str = self.get_captcha_and_cookie(session)
+            data = {
+                "image": image_base64,
+            }
+            r = session.post(url=CAPTCHA_DISCERN_URL, json=data)
+            data = r.json()
+            captcha_code = data["message"] if data["code"] == 0 else ''
+
+            # captcha_code = form["code"]
+            username = form["username"]
+            password = form["password"]
+            # cookies_str = form["cookies_str"]
+            cookies = json.loads(cookies_str)
+            for k, v in cookies.items():
+                session.cookies.set(name=k, value=v)
+            session = self.post_data(session, username, password, captcha_code)
+            return session
         # return self.login_test(session)
 
     def post_data(self, session, username, password, captcha_code):
         try:
-            s = requests.get(self.login_url, headers=self.headers, allow_redirects=False)
+            s = session.get(self.login_url, headers=self.headers, allow_redirects=False)
             location = s.headers['Location']
             self.post_url += location
             self.domain += location.split('/', )[1]

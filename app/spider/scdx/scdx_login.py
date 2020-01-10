@@ -1,10 +1,11 @@
-import requests
 import base64
 import json
 import hashlib
-from bs4 import BeautifulSoup
+
+import requests
+
 from app.config import CAPTCHA_DISCERN_URL
-from app.spider.spiderbase import SpiderBase
+from app.spider.spiderbase import SpiderBase, Session
 from utils import log, getuser_agent
 
 
@@ -21,12 +22,12 @@ class ScdxLogin(SpiderBase):
         self.is_login = False
 
     def make_session(self):
-        session = requests.session()
+        session = Session()
         session.headers = self.headers
         return session
 
-    def get_captcha_and_cookie(self):
-        r = requests.get(self.captcha_url, headers=self.headers)
+    def get_captcha_and_cookie(self, session):
+        r = session.get(self.captcha_url, headers=self.headers)
         if r.status_code != 200:
             log("获取验证码时发生了一些错误")
             raise ValueError('没有获取到验证码')
@@ -38,11 +39,11 @@ class ScdxLogin(SpiderBase):
     def active_cookies(self, form):
         session = self.make_session()
 
-        image_base64, cookies_str = self.get_captcha_and_cookie()
+        image_base64, cookies_str = self.get_captcha_and_cookie(session)
         data = {
             "image": image_base64,
         }
-        r = requests.post(url=CAPTCHA_DISCERN_URL, json=data)
+        r = session.post(url=CAPTCHA_DISCERN_URL, json=data)
         data = r.json()
         captcha_code = data["message"] if data["code"] == 0 else ''
 

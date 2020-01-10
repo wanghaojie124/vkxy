@@ -95,7 +95,7 @@ def get_images():
 def add_banners():
     banner = Banner()
     form = request.form
-    banner_item = Banner.query.filter_by(title=form['title']).first()
+    banner_item = Banner.query.filter_by(title=form['title'], college=form['college']).first()
     image = request.files['image']
     path = IMAGE_PATH + '/'
     if banner_item:

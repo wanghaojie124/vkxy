@@ -3,7 +3,7 @@ from flask import request
 from app.spider.scdx.scdx_assess import ScdxAssess
 from app.spider.scdx.scdx_login import ScdxLogin
 from app.spider.xnjd.xnjd_assess import XnjdAssess
-from app.spider.xnjd.Xnjd_login import XnjdLogin
+from app.spider.xnjd.xnjd_login import XnjdLogin
 from app.models.user import User
 from utils import log
 

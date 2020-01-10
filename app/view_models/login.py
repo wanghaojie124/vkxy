@@ -6,8 +6,8 @@ from app.spider.scdx.scdx_login import ScdxLogin
 from app.spider.scdx.scdx_spider import ScdxSpider
 from app.spider.scsd.scsd_login import ScsdLogin
 from app.spider.scsd.scsd_spider import ScsdSpider
-from app.spider.xnjd.Xnjd_login import XnjdLogin
-from app.spider.xnjd.Xnjd_spider import XnjdSpider
+from app.spider.xnjd.xnjd_login import XnjdLogin
+from app.spider.xnjd.xnjd_spider import XnjdSpider
 from utils import log
 
 
@@ -98,6 +98,12 @@ class LoginController:
             form = request.get_json()
             session = scsd.active_cookies(form)
 
+            if not session:
+                return {
+                    "status": 403,
+                    'msg': '教务处已关闭'
+                }
+
             # 进行是否登入教务系统判断
             if scsd.is_login:
                 # 在登录进入教务系统后，进行如下操作
@@ -144,7 +150,7 @@ class LoginController:
         if method == "POST":
             form = request.get_json()
             i = 1
-            while i < 4:
+            while i < 3:
                 session = scdx.active_cookies(form)
                 i += 1
                 if scdx.is_login:

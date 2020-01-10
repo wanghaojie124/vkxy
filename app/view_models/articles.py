@@ -68,7 +68,7 @@ class ArticleController:
     def save_article(self):
         articles = Articles()
         form = request.form
-        article = Articles.query.filter_by(title=form['title']).first()
+        article = Articles.query.filter_by(title=form['title'], college=form['college']).first()
         image = request.files['image']
         path = IMAGE_PATH + '/'
         if article:
