@@ -102,7 +102,7 @@ class AssessController:
 
             if scdx.is_login:
                 assess = ScdxAssess()
-                assess.main(form['uid'], session)
+                assess.main(form['uid'], session, form['username'])
 
                 data = {
                     'status': 200,

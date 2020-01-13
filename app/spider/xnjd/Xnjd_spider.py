@@ -161,62 +161,40 @@ class XnjdSpider(SpiderBase):
 
     def save_score(self, uid):
         status = self.get_score()
+        with db.auto_commit():
+            db.session.query(UserScore).filter(UserScore.uid == uid).delete()
         if status:
             for i in self.score:
                 user_score = UserScore()
                 score_dict = i
                 score_dict['uid'] = uid
                 user_score.setattr(score_dict)
-                find_user = UserScore.query.filter_by(
-                    course=score_dict['course'], uid=uid, xueqi=score_dict['xueqi']
-                                                        ).first()
-                if find_user:
-                    with db.auto_commit():
-                        find_user.setattr(score_dict)
-                else:
-                    with db.auto_commit():
-                        db.session.add(user_score)
+                with db.auto_commit():
+                    db.session.add(user_score)
             return True
         else:
             return False
 
     def save_schedule(self, uid):
         self.get_schedule()
-        schedule = UserSchedule.query.filter_by(uid=uid).all()
-        for i in schedule:
-            with db.auto_commit():
-                db.session.delete(i)
+        with db.auto_commit():
+            db.session.query(UserSchedule).filter(UserSchedule.uid == uid).delete()
         for i in self.schedule:
             user_schedule = UserSchedule()
             schedule_dict = i
             schedule_dict['uid'] = uid
             user_schedule.setattr(schedule_dict)
-            update_schedule = UserSchedule.query.filter_by(jie=schedule_dict['jie'], uid=uid).first()
-            if update_schedule:
-                with db.auto_commit():
-                    update_schedule.setattr(schedule_dict)
-            else:
-                with db.auto_commit():
-                    db.session.add(user_schedule)
+            with db.auto_commit():
+                db.session.add(user_schedule)
 
     def save_next_term_schedule(self, uid):
         self.get_next_term_schedule()
-        schedule = XnjdNextTermSchedule.query.filter_by(uid=uid).all()
-        for i in schedule:
-            with db.auto_commit():
-                db.session.delete(i)
+        with db.auto_commit():
+            db.session.query(XnjdNextTermSchedule).filter(XnjdNextTermSchedule.uid == uid).delete()
         for i in self.next_schedule:
             user_schedule = XnjdNextTermSchedule()
             schedule_dict = i
             schedule_dict['uid'] = uid
             user_schedule.setattr(schedule_dict)
-            update_schedule = XnjdNextTermSchedule.query.filter_by(class_day=schedule_dict['class_day'],
-                                                                   course_name=schedule_dict['course_name'],
-                                                                   course_continue=schedule_dict['course_continue'],
-                                                                   uid=uid).first()
-            if update_schedule:
-                with db.auto_commit():
-                    update_schedule.setattr(schedule_dict)
-            else:
-                with db.auto_commit():
-                    db.session.add(user_schedule)
+            with db.auto_commit():
+                db.session.add(user_schedule)

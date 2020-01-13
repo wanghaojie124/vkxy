@@ -151,22 +151,16 @@ class ScsdSpider(SpiderBase):
 
     def save_score(self, uid):
         status = self.get_score()
-
+        with db.auto_commit():
+            db.session.query(UserScore).filter(UserScore.uid == uid).delete()
         if status:
             for i in self.score:
                 user_score = UserScore()
                 score_dict = i
                 score_dict['uid'] = uid
                 user_score.setattr(score_dict)
-                find_user = UserScore.query.filter_by(
-                    course=score_dict['course'], uid=uid, xueqi=score_dict['xueqi']
-                                                        ).first()
-                if find_user:
-                    with db.auto_commit():
-                        find_user.setattr(score_dict)
-                else:
-                    with db.auto_commit():
-                        db.session.add(user_score)
+                with db.auto_commit():
+                    db.session.add(user_score)
             return True
         else:
             return False
@@ -174,11 +168,13 @@ class ScsdSpider(SpiderBase):
     def save_schedule(self, uid):
         self.get_schedule()
         if not self.xh:
-            self.get_score()
-        schedule = UserSchedule.query.filter_by(uid=uid).all()
-        for i in schedule:
-            with db.auto_commit():
-                db.session.delete(i)
+            score_html = self.session.get(self.score_url)
+            soup = BeautifulSoup(score_html.content, 'lxml')
+            infos = soup.find('span', id='ctl00_ctl00_body_body_lblSubTitle').find_all('strong')
+            self.xh = infos[0].text
+            self.name = infos[1].text
+        with db.auto_commit():
+            db.session.query(UserSchedule).filter(UserSchedule.uid == uid).delete()
         for i in self.schedule:
             user_schedule = UserSchedule()
             schedule_dict = i
@@ -186,23 +182,15 @@ class ScsdSpider(SpiderBase):
             schedule_dict['xh'] = self.xh
             schedule_dict['name'] = self.name
             user_schedule.setattr(schedule_dict)
-            update_schedule = UserSchedule.query.filter_by(jie=schedule_dict['jie'], uid=uid).first()
-            if update_schedule:
-                with db.auto_commit():
-                    update_schedule.setattr(schedule_dict)
-            else:
-                with db.auto_commit():
-                    db.session.add(user_schedule)
+            with db.auto_commit():
+                db.session.add(user_schedule)
 
     def save_total_score(self, uid):
         data = self.get_total_score(uid)
         data['uid'] = uid
+        with db.auto_commit():
+            db.session.query(UserTotalScore).filter(UserTotalScore.uid == uid).delete()
         total_score = UserTotalScore()
-        user_info = UserTotalScore.query.filter_by(uid=uid).first()
-        if user_info:
-            with db.auto_commit():
-                user_info.setattr(data)
-        else:
-            with db.auto_commit():
-                total_score.setattr(data)
-                db.session.add(total_score)
+        with db.auto_commit():
+            total_score.setattr(data)
+            db.session.add(total_score)

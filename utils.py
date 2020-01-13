@@ -85,6 +85,7 @@ def get_need_week(start_date, request_week):
     year = start_date1.year
 
     fir_day = datetime.datetime(year, 1, 1)
+    request_week = request_week if request_week else 1
     search_date = 7 * int(request_week) + int(start_date1.strftime('%j')) - 7
     zone = datetime.timedelta(days=search_date)
     search_date = datetime.datetime.strftime(fir_day + zone, '%Y-%m-%d')
@@ -140,5 +141,20 @@ def upload_qiniu(path, file_name):
     assert ret['hash'] == etag(localfile)
 
 
+def func_time(f):
+    """
+    简单记录执行时间
+    :param f:
+    :return:
+    """
+
+    def wrapper(*args, **kwargs):
+        start = time.time()
+        result = f(*args, **kwargs)
+        end = time.time()
+        print(f.__name__, 'took', end - start, 'seconds')
+        return result
+
+    return wrapper
 
 

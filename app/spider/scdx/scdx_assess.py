@@ -76,7 +76,7 @@ class ScdxAssess(SpiderBase):
         r = session.post(self.assess_url, data)
         log(uid, '*****提交了数据', r.status_code)
 
-    def assess_async(self, app, uid, session):
+    def assess_async(self, app, uid, session, xh):
         with app.app_context():
             if len(self.assess_list) == 0:
                 self.get_assess_list(session)
@@ -95,17 +95,17 @@ class ScdxAssess(SpiderBase):
                         log('******已进行', i, '总共', total, '剩余', len(self.assess_list))
                     except Exception as e:
                         log(uid, '*****异步评课', e, '准备进行下次评课*****')
-            scdx = ScdxSpider(session)
+            scdx = ScdxSpider(session, xh)
             scdx.save_score(uid)
             scdx.save_next_term_schedule(uid)
 
     # 异步存储数据入口函数
-    def assess(self, uid, session):
+    def assess(self, uid, session, xh):
         app = current_app._get_current_object()
-        thr = Thread(target=self.assess_async, args=[app, uid, session])
+        thr = Thread(target=self.assess_async, args=[app, uid, session, xh])
         thr.start()
         log(uid, "开启新线程评课")
 
-    def main(self, uid, session):
-        self.assess(uid, session)
+    def main(self, uid, session, xh):
+        self.assess(uid, session, xh)
         self.get_course_list(session)

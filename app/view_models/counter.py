@@ -199,7 +199,7 @@ class Counter:
                             score_sum += 60 * float(score.xuefen)
                         elif score.score == ('不及格' and ''):
                             score_sum += 0
-                avg_score = score_sum / total_xuefen
+            avg_score = score_sum / total_xuefen
             grade_point = total_point / total_xuefen
             data = {
                 'avg_score': float('%.2f' % avg_score),
@@ -231,8 +231,8 @@ class Counter:
                             score_sum += 60 * float(score.xuefen)
                         elif score.score == ('不及格' and ''):
                             score_sum += 0
-                avg_score = score_sum / total_xuefen
-            grade_point = total_point / total_xuefen
+            avg_score = score_sum / total_xuefen if total_xuefen != 0 else 0
+            grade_point = total_point / total_xuefen if total_xuefen != 0 else 0
             data = {
                 'avg_score': float('%.2f' % avg_score),
                 'total_xuefen': total_xuefen,
