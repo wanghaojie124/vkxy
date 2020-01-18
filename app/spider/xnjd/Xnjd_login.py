@@ -19,6 +19,7 @@ class XnjdLogin(SpiderBase):
             "X-Requested-With": "XMLHttpRequest"
         }
         self.test_url = "http://jwc.swjtu.edu.cn/vatuu/UserFramework"
+        self.is_login = False
 
     def make_session(self):
         session = Session()
@@ -78,18 +79,15 @@ class XnjdLogin(SpiderBase):
             "loginMsg": "xxx"
         }
         r = session.post(self.post_url1, data=data1)
-
+        r = session.get(self.test_url)
+        if "封未读消息" in r.content.decode():
+            self.is_login = True
+            log("登陆成功")
+        else:
+            log("登录失败")
         # print(r.content.decode())
         return session
 
-    def login_test(self, session):
-        r = session.get(self.test_url)
-        if "封未读消息" in r.content.decode():
-            log("登陆成功")
-            return True
-        else:
-            log("登录失败")
-            return False
 
 
 

@@ -86,7 +86,7 @@ class ScsdSpider(SpiderBase):
             }
             return data
         except IndexError as e:
-            log('***', '师大' + uid, '获取total_score错误', e)
+            log('***', '师大' + str(uid), '获取total_score错误', e)
 
     def get_schedule(self):
         schedule_html = self.session.get(self.schedule_url)
@@ -168,11 +168,14 @@ class ScsdSpider(SpiderBase):
     def save_schedule(self, uid):
         self.get_schedule()
         if not self.xh:
-            score_html = self.session.get(self.score_url)
-            soup = BeautifulSoup(score_html.content, 'lxml')
-            infos = soup.find('span', id='ctl00_ctl00_body_body_lblSubTitle').find_all('strong')
-            self.xh = infos[0].text
-            self.name = infos[1].text
+            try:
+                score_html = self.session.get(self.score_url)
+                soup = BeautifulSoup(score_html.content, 'lxml')
+                infos = soup.find('span', id='ctl00_ctl00_body_body_lblSubTitle').find_all('strong')
+                self.xh = infos[0].text
+                self.name = infos[1].text
+            except Exception as e:
+                pass
         with db.auto_commit():
             db.session.query(UserSchedule).filter(UserSchedule.uid == uid).delete()
         for i in self.schedule:

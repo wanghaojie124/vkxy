@@ -6,6 +6,7 @@ from app.models.scdx_schedule import ScdxSchedule
 from app.models.user_schedule import UserSchedule
 from app.spider.scsd.scsd_calendar import get_scsd_calendar
 from app.spider.xnjd.xnjd_calendar import XnjdCalendar
+from app.spider.zjcm.zjcm_calendar import ZJCM_BEGIN_DATE, ZJCM_TOTAL_WEEKS
 from utils import log, black_list, white_list, get_week_day, get_current_week, get_need_week
 import re
 
@@ -47,7 +48,7 @@ class ScheduleController:
 
     def get_xnjd_next_term_course_info(self, ex):
         jie1 = int(ex['course_continue'].split('-')[0])
-        jie2 = int(ex['course_continue'].split('-')[1]) + 1
+        jie2 = int(ex['course_continue'].split('-')[-1]) + 1
         new_ex_list = []
         for jie in range(jie1, jie2):
             new_ex = {
@@ -327,6 +328,39 @@ class ScheduleController:
                     ex[k] = v
         return new_ex_list
 
+    def get_zjcm_course_info(self, res):
+        for k, v in res.items():
+            if isinstance(v, list):
+                week_str = v[1]
+                if '单' in week_str:
+                    s = re.findall(r'\d+', week_str)
+                    weeks = range(int(s[0]), int(s[1]) + 1)
+                    week_list = []
+                    for i in weeks:
+                        if (i % 2) != 0:
+                            week_list.append(str(i))
+                    v.append(week_list)
+                elif '双' in week_str:
+                    s = re.findall(r'\d+', week_str)
+                    weeks = range(int(s[0]), int(s[1]) + 1)
+                    week_list = []
+                    for i in weeks:
+                        if (i % 2) == 0:
+                            week_list.append(str(i))
+                    v.append(week_list)
+                elif '-' in week_str:
+                    s = re.findall(r'\d+', week_str)
+                    weeks = range(int(s[0]), int(s[1]) + 1)
+                    week_list = []
+                    for i in weeks:
+                        week_list.append(str(i))
+                    v.append(week_list)
+                elif ',' in week_str or '，' in week_str:
+                    s = re.findall(r'\d+', week_str)
+                    v.append(s)
+                res[k] = v
+        return res
+
     @staticmethod
     def get_request_schedule(res, request_week):
         pop_list = []
@@ -559,6 +593,83 @@ class ScheduleController:
                         i.update(res_dict)
         return result
 
+    def zjcm_schedule(self, uid, request_week, request_term):
+        if request_term == 'next':
+            return []
+            # res_list = ScdxNextTermSchedule.query.filter_by(uid=uid).all()
+            # date = SCDX_TERM2
+            # current_week = get_need_week(date, request_week)
+        else:
+            res_list = UserSchedule.query.filter_by(uid=uid).all()
+            date = ZJCM_BEGIN_DATE
+            total_weeks = ZJCM_TOTAL_WEEKS
+            current_week = get_current_week(date, datetime.now().strftime('%Y-%m-%d'))
+        result = []
+        for res in res_list:
+            res_dict = res.to_dict()
+            exce = ['id', 'uid', 'status']
+            res_dict = black_list(res_dict, exce)
+            # 课程名称处理，拆开为课程名称，上课周数，上课地点，老师
+            for k, v in res_dict.items():
+                if isinstance(v, str) and '\n' in v:
+                    v = v.split('\n')
+                    try:
+                        course = v[0]
+                        weeks = v[1].split('{')[1]
+                        weeks = weeks.split('}')[0]
+                        weeks = weeks.split('|')[0] if '|' in weeks else weeks
+
+                        address = v[3]
+                        teacher = v[2]
+                        v = [course, weeks, address, teacher]
+                        res_dict[k] = v
+                    except Exception as e:
+                        log('*****在处理课程名称时发生了错误', e)
+                    else:
+                        res_dict[k] = v
+            res_dict = self.get_xnjd_course_info(res_dict)
+            if request_week:
+                res_dict = self.get_request_schedule(res_dict, request_week)
+            else:
+                res_dict = self.get_request_schedule(res_dict, current_week)
+            res_dict['current_week'] = current_week
+            res_dict['total_weeks'] = total_weeks
+            result.append(res_dict)
+        return result
+
+    def zjcm_today_schedule(self, uid):
+        res_list = UserSchedule.query.filter_by(uid=uid).all()
+        date = ZJCM_BEGIN_DATE
+        current_week = get_current_week(date, datetime.now().strftime('%Y-%m-%d'))
+        result = []
+        for res in res_list:
+            res_dict = res.to_dict()
+            weekday = get_week_day(datetime.now())
+            wonder = ['jie', weekday]
+            res_dict = white_list(res_dict, wonder)
+            # 课程名称处理，拆开为课程名称，上课周数，上课地点，老师
+            for k, v in res_dict.items():
+                if isinstance(v, str) and '\n' in v:
+                    v = v.split('\n')
+                    try:
+                        course = v[0]
+                        weeks = v[1].split('{')[1]
+                        weeks = weeks.split('}')[0]
+                        weeks = weeks.split('|')[0] if '|' in weeks else weeks
+
+                        address = v[3]
+                        teacher = v[2]
+                        v = [course, weeks, address, teacher]
+                        res_dict[k] = v
+                    except Exception as e:
+                        log('*****在处理课程名称时发生了错误', e)
+                    else:
+                        res_dict[k] = v
+            res_dict = self.get_xnjd_course_info(res_dict)
+            res_dict = self.get_request_schedule(res_dict, current_week)
+            result.append(res_dict)
+        return result
+
     def main(self, college, uid, request_week, request_term):
         if college == '西南交通大学':
             data = self.xnjd_schedule(uid, request_week, request_term)
@@ -568,6 +679,9 @@ class ScheduleController:
             return data
         elif college == '四川大学':
             data = self.scdx_schedule(uid, request_week, request_term)
+            return data
+        elif college == '浙江传媒学院':
+            data = self.zjcm_schedule(uid, request_week, request_term)
             return data
         else:
             info = {
@@ -585,6 +699,9 @@ class ScheduleController:
             return data
         elif college == '四川大学':
             data = self.scdx_today_schedule(uid)
+            return data
+        elif college == '浙江传媒学院':
+            data = self.zjcm_today_schedule(uid)
             return data
         else:
             info = {

@@ -6,21 +6,21 @@ from app.spider.scsd.scsd_login import ScsdLogin
 from app.spider.scsd.scsd_spider import ScsdSpider
 from app.spider.xnjd.xnjd_login import XnjdLogin
 from app.spider.xnjd.xnjd_spider import XnjdSpider
+from app.spider.zjcm.zjcm_login import ZjcmLogin
+from app.spider.zjcm.zjcm_spider import ZjcmSpider
 from utils import log
 
 
 class RefreshController:
-
-    def xnjd_refresh(self, method):
-        xnjd = XnjdLogin()
-        if method == "GET":
-            image_base64, cookies_str = xnjd.get_captcha_and_cookie()
-
-            info = {
-                'image_base64': image_base64,
-                'cookies_str': cookies_str
-            }
-            return info
+    def refresh(self, method, model, spider):
+        # if method == "GET":
+        #     image_base64, cookies_str = model.get_captcha_and_cookie()
+        #
+        #     info = {
+        #         'image_base64': image_base64,
+        #         'cookies_str': cookies_str
+        #     }
+        #     return info
 
         if method == "POST":
             form = request.get_json()
@@ -28,15 +28,26 @@ class RefreshController:
             form['password'] = User.query.filter_by(id=form['uid']).first().password
             i = 1
             while i < 3:
-                session = xnjd.active_cookies(form)
+                session = model.active_cookies(form)
                 i += 1
-                if xnjd.login_test(session):
+                if model.is_login:
                     break
-            if xnjd.login_test(session):
-                spider = XnjdSpider(session)
+            if not session:
+                return {
+                    "status": 403,
+                    'msg': '教务处已关闭'
+                }
+
+            if model.is_login:
+                spider.session = session
+                if isinstance(spider, ScsdSpider) or isinstance(spider, ScdxSpider) or isinstance(spider, ZjcmSpider):
+                    spider.xh = form["username"]
                 spider.save_schedule(form['uid'])
                 status = spider.save_score(form['uid'])
-                spider.save_next_term_schedule(form['uid'])
+                if isinstance(spider, ScsdSpider) or isinstance(spider, ScdxSpider):
+                    spider.save_total_score(form['uid'])
+                if isinstance(spider, ScdxSpider) or isinstance(spider, XnjdSpider):
+                    spider.save_next_term_schedule(form['uid'])
                 data = {
                     'status': 200,
                     'msg': '已更新数据'
@@ -51,9 +62,17 @@ class RefreshController:
                     "status": 404,
                 }
 
+    def xnjd_refresh(self, method):
+        xnjd = XnjdLogin()
+        spider = XnjdSpider(session=None)
+        data = self.refresh(method, xnjd, spider)
+        return data
+
     def scsd_refresh(self, method):
         scsd = ScsdLogin()
-
+        # spider = ScsdSpider(session=None, domain=scsd.domain, username=None)
+        # data = self.refresh(method, scsd, spider)
+        # return data
         if method == "GET":
             image_base64, cookies_str = scsd.get_captcha_and_cookie()
 
@@ -101,32 +120,37 @@ class RefreshController:
 
     def scdx_refresh(self, method):
         scdx = ScdxLogin()
-        if method == "GET":
-            image_base64, cookies_str = scdx.get_captcha_and_cookie()
+        spider = ScdxSpider(session=None, xh=None)
+        data = self.refresh(method, scdx, spider)
+        return data
 
-            info = {
-                'image_base64': image_base64,
-                'cookies_str': cookies_str
-            }
-            return info
-
+    def zjcm_refresh(self, method):
+        zjcm = ZjcmLogin()
+        # spider = ZjcmSpider(session=None, username=None)
+        # data = self.refresh(method, zjcm, spider)
+        # return data
         if method == "POST":
             form = request.get_json()
             form['username'] = User.query.filter_by(id=form['uid']).first().username
             form['password'] = User.query.filter_by(id=form['uid']).first().password
             i = 1
             while i < 3:
-                session = scdx.active_cookies(form)
+                session = zjcm.active_cookies(form)
                 i += 1
-                if scdx.is_login:
+                if zjcm.is_login:
                     break
 
-            if scdx.is_login:
-                spider = ScdxSpider(session, form['username'])
+            if not session:
+                return {
+                    "status": 403,
+                    'msg': '教务处已关闭'
+                }
+
+            if zjcm.is_login:
+                spider = ZjcmSpider(session, form['username'])
                 spider.save_schedule(form['uid'])
                 status = spider.save_score(form['uid'])
-                spider.save_next_term_schedule(form['uid'])
-                spider.save_total_score(form['uid'])
+                # spider.save_next_term_schedule(form['uid'])
                 data = {
                     'status': 200,
                     'msg': '已更新数据'
@@ -151,4 +175,7 @@ class RefreshController:
             return data
         elif college == '四川师范大学':
             data = self.scsd_refresh(method)
+            return data
+        elif college == '浙江传媒学院':
+            data = self.zjcm_refresh(method)
             return data

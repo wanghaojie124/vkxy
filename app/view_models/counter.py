@@ -167,7 +167,7 @@ class Counter:
                             score_sum += 60 * float(score.xuefen)
                         elif score.score == ('不及格' and ''):
                             score_sum += 0
-                avg_score = score_sum / total_xuefen
+            avg_score = score_sum / total_xuefen
             grade_point = total_point / total_xuefen
             data = {
                 'avg_score': float('%.2f' % avg_score),
@@ -382,5 +382,8 @@ class Counter:
             data = self.scsd_counter(req)
             return data
         if college == "西南交通大学":
+            data = self.xnjd_counter(req)
+            return data
+        if college == "浙江传媒学院":
             data = self.xnjd_counter(req)
             return data

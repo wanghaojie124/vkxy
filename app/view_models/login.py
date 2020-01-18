@@ -8,6 +8,8 @@ from app.spider.scsd.scsd_login import ScsdLogin
 from app.spider.scsd.scsd_spider import ScsdSpider
 from app.spider.xnjd.xnjd_login import XnjdLogin
 from app.spider.xnjd.xnjd_spider import XnjdSpider
+from app.spider.zjcm.zjcm_login import ZjcmLogin
+from app.spider.zjcm.zjcm_spider import ZjcmSpider
 from utils import log
 
 
@@ -37,157 +39,80 @@ class LoginController:
         thr.start()
         log(uid, "开启新线程保存数据")
 
+    def login(self, method, model, spider):
+        # if method == "GET":
+        #     image_base64, cookies_str = model.get_captcha_and_cookie()
+        #
+        #     info = {
+        #         'image_base64': image_base64,
+        #         'cookies_str': cookies_str
+        #     }
+        #     return info
+
+        if method == "POST":
+            form = request.get_json()
+            session = model.active_cookies(form)
+
+            # 进行是否登入教务系统判断
+            if model.is_login:
+                # 在登录进入教务系统后，进行如下操作
+                # 实例化User，并保存入数据库
+                user = User()
+                user.save_to_db(form)
+                # 将user数据传入login_user方便获取当前用户信息
+                user = User.query.filter_by(username=form['username']).first()
+                login_user(user)
+                uid = current_user.id
+
+                # 定义一个新的函数，开启新线程异步将输入存入数据库
+                spider.session = session
+                self.save_to_db(form, uid, spider)
+
+                user = User.query.filter_by(username=form['username']).first()
+                success_data = {
+                    "username": user.username,
+                    "name": user.name,
+                    "uid": user.id,
+                    "status": 200,
+                }
+                return success_data
+            else:
+                log('*****用户名', form['username'], '在登录时发生了错误')
+                return {
+                    "status": 404,
+                }
+
     # 西南交大登录函数
     def xnjd_login(self, method):
         xnjd = XnjdLogin()
-        if method == "GET":
-            image_base64, cookies_str = xnjd.get_captcha_and_cookie()
-
-            info = {
-                'image_base64': image_base64,
-                'cookies_str': cookies_str
-            }
-            return info
-
-        if method == "POST":
-            form = request.get_json()
-            session = xnjd.active_cookies(form)
-
-            # 进行是否登入教务系统判断
-            if xnjd.login_test(session):
-                # 在登录进入教务系统后，进行如下操作
-                # 实例化User，并保存入数据库
-                user = User()
-                user.save_to_db(form)
-                # 将user数据传入login_user方便获取当前用户信息
-                user = User.query.filter_by(username=form['username']).first()
-                login_user(user)
-                uid = current_user.id
-
-                # 定义一个新的函数，开启新线程异步将输入存入数据库
-                spider = XnjdSpider(session)
-                self.save_to_db(form, uid, spider)
-
-                user = User.query.filter_by(username=form['username']).first()
-                success_data = {
-                    "username": user.username,
-                    "name": user.name,
-                    "uid": user.id,
-                    "status": 200,
-                }
-                return success_data
-            else:
-                log('*****用户名', form['username'], '在登录时发生了错误')
-                return {
-                    "status": 404,
-                }
+        spider = XnjdSpider(session=None)
+        data = self.login(method, xnjd, spider)
+        return data
 
     def scsd_login(self, method):
         scsd = ScsdLogin()
-
-        if method == "GET":
-            image_base64, cookies_str = scsd.get_captcha_and_cookie()
-
-            info = {
-                'image_base64': image_base64,
-                'cookies_str': cookies_str,
-            }
-            return info
-
-        if method == "POST":
-            form = request.get_json()
-            session = scsd.active_cookies(form)
-
-            if not session:
-                return {
-                    "status": 403,
-                    'msg': '教务处已关闭'
-                }
-
-            # 进行是否登入教务系统判断
-            if scsd.is_login:
-                # 在登录进入教务系统后，进行如下操作
-                # 实例化User，并保存入数据库
-                user = User()
-                user.save_to_db(form)
-                # 将user数据传入login_user方便获取当前用户信息
-                user = User.query.filter_by(username=form['username']).first()
-                login_user(user)
-                uid = current_user.id
-
-                # 定义一个新的函数，开启新线程异步将输入存入数据库
-                spider = ScsdSpider(session, scsd.domain, form['username'])
-                self.save_to_db(form, uid, spider)
-                # spider.save_total_score(uid)
-
-                user = User.query.filter_by(username=form['username']).first()
-                success_data = {
-                    "username": user.username,
-                    "name": user.name,
-                    "uid": user.id,
-                    "status": 200,
-                }
-                return success_data
-            else:
-                log('*****用户名', form['username'], '在登录时发生了错误')
-                return {
-                    "status": 404,
-                }
+        form = request.get_json()
+        spider = ScsdSpider(session=None, domain=scsd.domain, username=form['username'])
+        data = self.login(method, scsd, spider)
+        return data
 
     # 四川大学登录函数
     def scdx_login(self, method):
         scdx = ScdxLogin()
+        form = request.get_json()
+        spider = ScdxSpider(session=None, xh=form['username'])
+        data = self.login(method, scdx, spider)
+        return data
 
-        if method == "GET":
-            image_base64, cookies_str = scdx.get_captcha_and_cookie()
-
-            info = {
-                'image_base64': image_base64,
-                'cookies_str': cookies_str,
-            }
-            return info
-
-        if method == "POST":
-            form = request.get_json()
-            i = 1
-            while i < 3:
-                session = scdx.active_cookies(form)
-                i += 1
-                if scdx.is_login:
-                    break
-
-            # 进行是否登入教务系统判断
-            if scdx.is_login:
-                # 在登录进入教务系统后，进行如下操作
-                # 实例化User，并保存入数据库
-                user = User()
-                user.save_to_db(form)
-                # 将user数据传入login_user方便获取当前用户信息
-                user = User.query.filter_by(username=form['username']).first()
-                login_user(user)
-                uid = current_user.id
-
-                # 定义一个新的函数，开启新线程异步将输入存入数据库
-                spider = ScdxSpider(session, form['username'])
-                self.save_to_db(form, uid, spider)
-
-                user = User.query.filter_by(username=form['username']).first()
-                success_data = {
-                    "username": user.username,
-                    "name": user.name,
-                    "uid": user.id,
-                    "status": 200,
-                }
-                return success_data
-            else:
-                log('*****用户名', form['username'], '在登录时发生了错误')
-                return {
-                    "status": 404,
-                }
-
+    # 浙江传媒学院
+    def zjcm_login(self, method):
+        zjcm = ZjcmLogin()
+        form = request.get_json()
+        spider = ZjcmSpider(session=None, username=form["username"])
+        data = self.login(method, zjcm, spider)
+        return data
 
     def main(self, college, method):
-
         if college == '西南交通大学':
             data = self.xnjd_login(method)
             return data
@@ -196,4 +121,7 @@ class LoginController:
             return data
         elif college == '四川师范大学':
             data = self.scsd_login(method)
+            return data
+        elif college == '浙江传媒学院':
+            data = self.zjcm_login(method)
             return data

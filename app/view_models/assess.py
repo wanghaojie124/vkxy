@@ -24,9 +24,9 @@ class AssessController:
             while i < 4:
                 session = xnjd.active_cookies(form)
                 i += 1
-                if xnjd.login_test(session):
+                if xnjd.is_login:
                     break
-            if xnjd.login_test(session):
+            if xnjd.is_login:
                 assess = XnjdAssess()
                 assess.get_course_list(session)
                 data = {
@@ -44,10 +44,10 @@ class AssessController:
             while i < 4:
                 session = xnjd.active_cookies(form)
                 i += 1
-                if xnjd.login_test(session):
+                if xnjd.is_login:
                     break
 
-            if xnjd.login_test(session):
+            if xnjd.is_login:
                 assess = XnjdAssess()
                 assess.main(form['uid'], session)
 

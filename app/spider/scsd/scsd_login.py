@@ -107,9 +107,9 @@ class ScsdLogin(SpiderBase):
         r = session.post(self.post_url, data)
         if "处理数据" in r.text:
             self.is_login = True
-            log(username, "****登录成功")
+            log("四川师范", username, "****登录成功")
         else:
-            log("****登录失败", username)
+            log("****四川师范登录失败", username)
         soup = BeautifulSoup(r.text, 'lxml')
         self.sid = soup.find('form', id='form1').get('action')
         return session
