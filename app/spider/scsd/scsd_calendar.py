@@ -1,7 +1,5 @@
 import time
-
 from pyquery import PyQuery as pq
-
 from app.spider.spiderbase import Session
 from utils import getuser_agent
 import re

@@ -7,9 +7,7 @@ from app.models.base import db
 from app.models.user_next_term_schedule import UserNextTermSchedule
 from app.models.user_schedule import UserSchedule
 from app.models.user_score import UserScore
-from app.models.user_total_score import UserTotalScore
 from app.spider.spiderbase import SpiderBase
-from app.spider.zjcm.zjcm_calendar import ZJCM_BEGIN_DATE
 from utils import log, getuser_agent
 
 

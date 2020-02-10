@@ -101,16 +101,37 @@ class ScheduleController:
             if isinstance(v, str) and ';' in v:
                 res = v.split(';')
                 new_course_list = []
+                new_res = []
+                for i in res:
+                    if "周)\n" in i:
+                        i = i.split(')\n')
+                        if i[0][-1] != ")":
+                            i[0] += ")"
+                        for s in i:
+                            new_res.append(s)
+                    else:
+                        new_res.append(i)
+                    res = new_res
                 for res_item in res:
                     result = res_item.split('\n')
                     result = [x.strip() for x in result if x.strip() != '']
-                    teacher = result[1].split('[')[0]
-                    address = result[1].split('[')[2]
-                    weeks = re.findall(r'[(](.*?)[)]', result[1])[0]
-                    result[1] = weeks
-                    result.append(address)
-                    result.append(teacher)
-                    new_course_list.append(result)
+                    if len(result) == 3:
+                        teacher = result[1].split('[')[0]
+                        address = result[2].split('[')[0]
+                        weeks = re.findall(r'[(](.*?)[)]', result[2])[0]
+                        result[1] = weeks
+                        result.append(address)
+                        result.append(teacher)
+                        new_course_list.append(result)
+                    else:
+
+                        teacher = result[1].split('[')[0]
+                        address = result[1].split('[')[2]
+                        weeks = re.findall(r'[(](.*?)[)]', result[1])[0]
+                        result[1] = weeks
+                        result.append(address)
+                        result.append(teacher)
+                        new_course_list.append(result)
                 ex[k] = new_course_list
             elif isinstance(v, str) and '\n' in v and v.count('\n') > 3:
                 if v.count('\n') < 5 and v.count('\n') > 2:
@@ -412,7 +433,7 @@ class ScheduleController:
                     if request_week:
                         res_dict = self.get_request_schedule(res_dict, request_week)
                     else:
-                        res_dict = self.get_request_schedule(res_dict, current_week)
+                        res_dict = self.get_request_schedule(res_dict, current_week if int(current_week) <= 20 else '1')
                     for i in result:
                         if i['jie'] == res_dict['jie']:
                             for k, v in res_dict.items():
@@ -447,8 +468,8 @@ class ScheduleController:
                 if request_week:
                     res_dict = self.get_request_schedule(res_dict, request_week)
                 else:
-                    res_dict = self.get_request_schedule(res_dict, current_week)
-                res_dict['current_week'] = current_week
+                    res_dict = self.get_request_schedule(res_dict, current_week if int(current_week) <= 23 else '1')
+                res_dict['current_week'] = current_week if int(current_week) <= 23 else '1'
                 res_dict['total_weeks'] = total_weeks
                 result.append(res_dict)
         return result
@@ -498,8 +519,8 @@ class ScheduleController:
             if request_week:
                 res_dict = self.get_request_schedule(res_dict, request_week)
             else:
-                res_dict = self.get_request_schedule(res_dict, current_week)
-            res_dict['current_week'] = current_week
+                res_dict = self.get_request_schedule(res_dict, current_week if int(current_week) <= 20 else '1')
+            res_dict['current_week'] = current_week if int(current_week) <= 23 else '1'
             res_dict['total_weeks'] = total_weeks
             result.append(res_dict)
         return result
@@ -539,7 +560,7 @@ class ScheduleController:
                 'Fri': '',
                 'Sat': '',
                 'Sun': '',
-                'current_week': current_week,
+                'current_week': current_week if int(current_week) <= 20 else '1',
                 'total_weeks': SCDX_TOTAL_WEEKS
             }
             data['jie'] = str(i)
@@ -553,7 +574,7 @@ class ScheduleController:
                 if request_week:
                     res_dict = self.get_request_schedule(res_dict, request_week)
                 else:
-                    res_dict = self.get_request_schedule(res_dict, current_week)
+                    res_dict = self.get_request_schedule(res_dict, current_week if int(current_week) <= 20 else '1')
                 for i in result:
                     if i['jie'] == res_dict['jie']:
                         for k, v in res_dict.items():

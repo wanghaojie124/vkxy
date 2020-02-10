@@ -1,5 +1,6 @@
 import copy
 
+from datetime import datetime
 from pyquery import PyQuery as pq
 from bs4 import BeautifulSoup
 from app.models.base import db
@@ -90,6 +91,31 @@ class ScsdSpider(SpiderBase):
 
     def get_schedule(self):
         schedule_html = self.session.get(self.schedule_url)
+
+        # 以下代码块在教务处学期切换后需要注释掉
+        data_page = BeautifulSoup(schedule_html.text, "lxml")
+        MdEcUserId = data_page.find('input', id='ctl00_ctl00_txtMdEcUserId', attrs={'value': True}).get('value', '')
+        __VIEWSTATE = data_page.find('input', id='__VIEWSTATE', attrs={'value': True}).get('value', '')
+        __EVENTVALIDATION = data_page.find('input', id='__EVENTVALIDATION', attrs={'value': True}).get('value', '')
+        year = str(datetime.now().year)[2:]
+        month = datetime.now().month
+        if month >= 8:
+            term = year + str(int(year) + 1) + "1"
+        else:
+            term = str(int(year) - 1) + year + "2"
+        data = {
+            "__EVENTTARGET": "ctl00$ctl00$body$body$wucXndXq1$ddlItem",
+            "__EVENTARGUMENT": "",
+            "__LASTFOCUS": "",
+            "__VIEWSTATE": __VIEWSTATE,
+            "__VIEWSTATEGENERATOR": "62EE8C34",
+            "__EVENTVALIDATION": __EVENTVALIDATION,
+            "ctl00$ctl00$txtMdEcUserId": MdEcUserId,
+            "ctl00$ctl00$body$body$wucXndXq1$ddlItem": term
+        }
+        self.session.headers["Referer"] = self.schedule_url
+        schedule_html = self.session.post(url=self.schedule_url, data=data)
+
         page = pq(schedule_html.content)
         trs = page('#divScheduleTable table tbody tr')
         tr_len = 0

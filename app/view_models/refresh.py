@@ -46,8 +46,8 @@ class RefreshController:
                 status = spider.save_score(form['uid'])
                 if isinstance(spider, ScsdSpider) or isinstance(spider, ScdxSpider):
                     spider.save_total_score(form['uid'])
-                if isinstance(spider, ScdxSpider) or isinstance(spider, XnjdSpider):
-                    spider.save_next_term_schedule(form['uid'])
+                # if isinstance(spider, ScdxSpider) or isinstance(spider, XnjdSpider):
+                #     spider.save_next_term_schedule(form['uid'])
                 data = {
                     'status': 200,
                     'msg': '已更新数据'

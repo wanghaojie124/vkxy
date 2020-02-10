@@ -24,8 +24,8 @@ class LoginController:
                 spider.save_score(uid)
                 if isinstance(spider, ScsdSpider) or isinstance(spider, ScdxSpider):
                     spider.save_total_score(uid)
-                if isinstance(spider, ScdxSpider) or isinstance(spider, XnjdSpider):
-                    spider.save_next_term_schedule(uid)
+                # if isinstance(spider, ScdxSpider) or isinstance(spider, XnjdSpider):
+                #     spider.save_next_term_schedule(uid)
                 # 保存用户姓名及学校
                 user.save_name(form['username'], spider.name, spider.college)
                 log(uid, "*****存储数据完毕")
@@ -89,12 +89,47 @@ class LoginController:
         data = self.login(method, xnjd, spider)
         return data
 
+    # TODO 川师不能进行函数提取，否则会登录失败
     def scsd_login(self, method):
         scsd = ScsdLogin()
-        form = request.get_json()
-        spider = ScsdSpider(session=None, domain=scsd.domain, username=form['username'])
-        data = self.login(method, scsd, spider)
-        return data
+
+        if method == "POST":
+            form = request.get_json()
+            session = scsd.active_cookies(form)
+
+            # 进行是否登入教务系统判断
+            if scsd.is_login:
+                # 在登录进入教务系统后，进行如下操作
+                # 实例化User，并保存入数据库
+                user = User()
+                user.save_to_db(form)
+                # 将user数据传入login_user方便获取当前用户信息
+                user = User.query.filter_by(username=form['username']).first()
+                login_user(user)
+                uid = current_user.id
+
+                spider = ScsdSpider(session=None, domain=scsd.domain, username=form['username'])
+                # 定义一个新的函数，开启新线程异步将输入存入数据库
+                spider.session = session
+                self.save_to_db(form, uid, spider)
+
+                user = User.query.filter_by(username=form['username']).first()
+                success_data = {
+                    "username": user.username,
+                    "name": user.name,
+                    "uid": user.id,
+                    "status": 200,
+                }
+                return success_data
+            else:
+                log('*****用户名', form['username'], '在登录时发生了错误')
+                return {
+                    "status": 404,
+                }
+
+        # spider = ScsdSpider(session=None, domain=scsd.domain, username=form['username'])
+        # data = self.login(method, scsd, spider)
+        # return data
 
     # 四川大学登录函数
     def scdx_login(self, method):
