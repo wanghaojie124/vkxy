@@ -1,0 +1,127 @@
+/*公共css*/
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    -webkit-overflow-scrolling: touch; /*控制元素在移动设备上是否使用滚动回弹效果*/
+    font-family: Roboto, Helvetica Neue, Helvetica, Tahoma, Arial, PingFang SC, Microsoft YaHei;
+}
+
+html, body {
+    margin: 0;
+    padding: 0;
+    height: 100%;
+}
+
+body {
+    background-color: #ffffff;
+}
+
+.el-container {
+    height: 100%;
+}
+
+.el-header {
+    background-color: #ffffff;
+    line-height: 60px;
+    font-size: 12px;
+    box-shadow: 0 0 10px 5px #eeeeee;
+    padding: 0;
+}
+
+.el-aside {
+    width: 200px !important;
+    color: #333;
+    overflow-x: hidden;
+    box-shadow: 0 10px 10px 5px #eeeeee;
+    background-color: #ffffff;
+}
+
+.el-menu-item-group__title {
+    padding: 0;
+}
+
+.el-menu-item i {
+    margin-right: 10px;
+}
+
+.el-menu-item.is-active .active {
+    position: absolute;
+    background-color: #4176FF;
+    top: 15px;
+    left: 0;
+    bottom: 15px;
+    width: 4px;
+}
+
+.el-menu {
+    border-right: 0;
+}
+
+.el-input-150 {
+    width: 150px;
+}
+
+.el-top {
+    margin-top: 20px;
+}
+
+.el-bottom {
+    margin-bottom: 20px;
+}
+
+.el-header-right {
+    float: right;
+}
+
+.el-header-left .el-button + .el-button, .el-header-right .el-button + .el-button {
+    margin-left: 0;
+}
+
+.el-table th {
+    background-color: #f5f5f5;
+}
+
+/*文字颜色*/
+.green-text {
+    color: #67C23A;
+}
+
+.red-text {
+    color: #F56C6C;
+}
+
+/*分页*/
+.page-block {
+    height: 70px;
+    text-align: center;
+    background-color: #ffffff;
+    padding-top: 20px;
+}
+
+/*查看大图*/
+.preview-img {
+    width: 100%;
+}
+
+/*登陆*/
+.login-bg {
+    height: 100%;
+    background-image: url("../assets/img/login_bg.png");
+    background-size: cover;
+}
+
+.login .el-form {
+    margin-top: 100px;
+}
+
+.login .el-input {
+    width: 190px;
+}
+
+.login .el-input__inner {
+    border-top: 0;
+    border-right: 0;
+    border-left: 0;
+    border-radius: 0;
+}
